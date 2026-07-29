@@ -1,0 +1,24 @@
+<header class="site-header">
+  <nav class="navbar" aria-label="Main navigation">
+    <a class="brand" routerLink="/" aria-label="HealthVault home">
+      <span class="brand-mark" aria-hidden="true">+</span>
+      <span>HealthVault</span>
+    </a>
+
+    <div class="nav-links">
+      <a
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Home
+      </a>
+      <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      <a href="/swagger">API Docs</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <router-outlet />
+</main>

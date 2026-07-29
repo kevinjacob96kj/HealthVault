@@ -10,7 +10,7 @@ builder.Services
     .AddNewtonsoftJson(options =>
     {
         options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-        options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+        options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -34,7 +34,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowOrigin");
 app.UseHttpsRedirection();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseAuthorization();
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();

@@ -5,7 +5,7 @@ FinanceTracker API.
 
 ## Technology
 
-- .NET 6
+- .NET 10
 - ASP.NET Core Web API
 - Entity Framework Core
 - SQL Server
@@ -24,6 +24,7 @@ src/
       AppDbContext.cs
     HealthVault.Persistence.csproj
   HealthVault.Web/
+    client/
     Controllers/
     Properties/
     Program.cs

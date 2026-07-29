@@ -1,0 +1,73 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid #d9e7e4;
+  backdrop-filter: blur(12px);
+}
+
+.navbar {
+  width: 100%;
+  min-height: 4.25rem;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #12343b;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #167d71;
+  border-radius: 0.55rem;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-links a {
+  padding: 0.6rem 0.85rem;
+  color: #3d5c63;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: #11685f;
+  background: #e4f3ef;
+}
+
+@media (max-width: 30rem) {
+  .navbar {
+    padding: 0 1rem;
+  }
+
+  .nav-links a {
+    padding-inline: 0.6rem;
+  }
+}

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace HealthVaultAPI.Controllers;
+namespace HealthVault.Web.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

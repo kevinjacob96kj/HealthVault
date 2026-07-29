@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace HealthVaultAPI.Models;
+namespace HealthVault.Persistence.Data;
 
 public class AppDbContext : DbContext
 {

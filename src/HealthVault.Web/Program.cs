@@ -1,4 +1,4 @@
-using HealthVaultAPI.Models;
+using HealthVault.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;

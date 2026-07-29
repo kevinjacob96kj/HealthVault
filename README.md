@@ -15,15 +15,20 @@ FinanceTracker API.
 ## Project structure
 
 ```text
-HealthVault.sln
-HealthVaultAPI/
-  HealthVaultAPI/
+src/
+  HealthVault.sln
+  HealthVault.Domain/
+    HealthVault.Domain.csproj
+  HealthVault.Persistence/
+    Data/
+      AppDbContext.cs
+    HealthVault.Persistence.csproj
+  HealthVault.Web/
     Controllers/
-    Models/
     Properties/
     Program.cs
     appsettings.json
-    HealthVaultAPI.csproj
+    HealthVault.Web.csproj
 ```
 
 The project currently contains infrastructure only. Domain models, API
@@ -40,8 +45,8 @@ Do not commit credentials or production connection strings.
 ## Run locally
 
 ```powershell
-dotnet restore HealthVault.sln
-dotnet run --project HealthVaultAPI/HealthVaultAPI/HealthVaultAPI.csproj
+dotnet restore src/HealthVault.sln
+dotnet run --project src/HealthVault.Web/HealthVault.Web.csproj
 ```
 
 Swagger is available at `/swagger` while running in the Development

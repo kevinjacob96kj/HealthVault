@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "HealthVaultAPI": {
+    "HealthVault.Web": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

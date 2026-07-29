@@ -1,8 +1,16 @@
 export interface Person {
-  personId: number;
+  id: number;
   firstName: string;
   lastName: string;
   email: string;
-  role: string;
   status: string;
+  roles: string[];
+}
+
+export interface CreatePersonRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  status?: string;
+  roles: string[];
 }

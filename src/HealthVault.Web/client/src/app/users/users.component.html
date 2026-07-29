@@ -1,7 +1,7 @@
 <section class="users-page">
   <header class="page-header">
     <h1>Admin</h1>
-    <p>People from the HealthVault database.</p>
+    <p>Manage people and their roles in HealthVault.</p>
   </header>
 
   @if (loading) {
@@ -9,35 +9,139 @@
   } @else if (error) {
     <p class="status error">{{ error }}</p>
   } @else {
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">First Name</th>
-            <th scope="col">Last Name</th>
-            <th scope="col">Email</th>
-            <th scope="col">Role</th>
-            <th scope="col">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (person of people; track person.personId) {
-            <tr>
-              <td>{{ person.personId }}</td>
-              <td>{{ person.firstName }}</td>
-              <td>{{ person.lastName }}</td>
-              <td>{{ person.email }}</td>
-              <td>{{ person.role }}</td>
-              <td>
-                <span class="status-pill" [class.inactive]="person.status === 'Inactive'">
-                  {{ person.status }}
-                </span>
-              </td>
-            </tr>
+    <section class="panel add-user" aria-labelledby="add-user-heading">
+      <h2 id="add-user-heading">Add user</h2>
+
+      <form class="add-form" (ngSubmit)="createPerson()">
+        <label>
+          First name
+          <input [(ngModel)]="newPerson.firstName" name="firstName" autocomplete="given-name" required />
+        </label>
+        <label>
+          Last name
+          <input [(ngModel)]="newPerson.lastName" name="lastName" autocomplete="family-name" required />
+        </label>
+        <label class="span-2">
+          Email
+          <input [(ngModel)]="newPerson.email" name="email" type="email" autocomplete="email" required />
+        </label>
+        <label>
+          Status
+          <select [(ngModel)]="newPerson.status" name="status">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </label>
+
+        <fieldset class="roles-fieldset span-full">
+          <legend>Roles</legend>
+          <div class="role-grid">
+            @for (role of availableRoles; track role) {
+              <label class="role-option">
+                <input
+                  type="checkbox"
+                  [checked]="newPerson.roles.includes(role)"
+                  (change)="toggleNewRole(role, $any($event.target).checked)"
+                />
+                {{ role }}
+              </label>
+            }
+          </div>
+        </fieldset>
+
+        <div class="form-actions span-full">
+          <button type="submit" [disabled]="creating">
+            {{ creating ? 'Adding…' : 'Add user' }}
+          </button>
+        </div>
+      </form>
+
+      @if (formError) {
+        <p class="inline-message error">{{ formError }}</p>
+      }
+      @if (createSuccess) {
+        <p class="inline-message success">{{ createSuccess }}</p>
+      }
+    </section>
+
+    <section class="panel people-panel" aria-labelledby="people-heading">
+      <h2 id="people-heading">People</h2>
+
+      @if (people.length === 0) {
+        <p class="empty">No people yet. Add a user above.</p>
+      } @else {
+        <div class="accordion">
+          @for (person of people; track person.id) {
+            <article class="accordion-item" [class.open]="isExpanded(person.id)">
+              <h3>
+                <button
+                  type="button"
+                  class="accordion-trigger"
+                  [attr.aria-expanded]="isExpanded(person.id)"
+                  [attr.aria-controls]="'person-panel-' + person.id"
+                  (click)="toggleAccordion(person.id)"
+                >
+                  <span class="person-summary">
+                    <span class="person-name">{{ person.firstName }} {{ person.lastName }}</span>
+                    <span class="person-meta">{{ person.email }}</span>
+                  </span>
+                  <span class="person-side">
+                    <span class="status-pill" [class.inactive]="person.status === 'Inactive'">
+                      {{ person.status }}
+                    </span>
+                    <span class="role-chips">
+                      @if (person.roles.length === 0) {
+                        <span class="role-chip muted">No roles</span>
+                      } @else {
+                        @for (role of person.roles; track role) {
+                          <span class="role-chip">{{ role }}</span>
+                        }
+                      }
+                    </span>
+                    <span class="chevron" aria-hidden="true"></span>
+                  </span>
+                </button>
+              </h3>
+
+              <div
+                class="accordion-panel"
+                [id]="'person-panel-' + person.id"
+                [hidden]="!isExpanded(person.id)"
+              >
+                <fieldset class="roles-fieldset">
+                  <legend>Edit roles</legend>
+                  <div class="role-grid">
+                    @for (role of availableRoles; track role) {
+                      <label class="role-option">
+                        <input
+                          type="checkbox"
+                          [checked]="hasRole(person.id, role)"
+                          (change)="toggleRole(person.id, role, $any($event.target).checked)"
+                        />
+                        {{ role }}
+                      </label>
+                    }
+                  </div>
+                </fieldset>
+
+                <div class="panel-actions">
+                  <button
+                    type="button"
+                    (click)="saveRoles(person)"
+                    [disabled]="savingId === person.id || !rolesChanged(person)"
+                  >
+                    {{ savingId === person.id ? 'Saving…' : 'Save roles' }}
+                  </button>
+                </div>
+
+                @if (roleError && isExpanded(person.id)) {
+                  <p class="inline-message error">{{ roleError }}</p>
+                }
+              </div>
+            </article>
           }
-        </tbody>
-      </table>
-    </div>
+        </div>
+      }
+    </section>
   }
 </section>

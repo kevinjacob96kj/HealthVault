@@ -36,53 +36,93 @@
     }
   </section>
 
-  <section class="panel" aria-labelledby="password-heading">
-    <h2 id="password-heading">Change password</h2>
-    <p class="panel-note">{{ passwordRulesMessage }}</p>
-
-    <form class="profile-form" (ngSubmit)="savePassword()">
-      <label class="span-2">
-        Current password
-        <app-password-field
-          [(ngModel)]="currentPassword"
-          name="currentPassword"
-          autocomplete="current-password"
-          [required]="true"
-        />
-      </label>
-      <label>
-        New password
-        <app-password-field
-          [(ngModel)]="newPassword"
-          name="newPassword"
-          autocomplete="new-password"
-          [minlength]="8"
-          [required]="true"
-        />
-      </label>
-      <label>
-        Confirm new password
-        <app-password-field
-          [(ngModel)]="confirmPassword"
-          name="confirmPassword"
-          autocomplete="new-password"
-          [minlength]="8"
-          [required]="true"
-        />
-      </label>
-
-      <div class="form-actions span-2">
-        <button type="submit" [disabled]="passwordSaving">
-          {{ passwordSaving ? 'Updating…' : 'Update password' }}
-        </button>
-      </div>
-    </form>
-
-    @if (passwordError) {
-      <p class="message error">{{ passwordError }}</p>
-    }
-    @if (passwordSuccess) {
-      <p class="message success">{{ passwordSuccess }}</p>
-    }
+  <section class="panel password-panel" aria-labelledby="password-heading">
+    <div>
+      <h2 id="password-heading">Password</h2>
+      <p class="panel-note">Update the password used to sign in to your account.</p>
+    </div>
+    <button type="button" (click)="openPasswordModal()">Change Password</button>
   </section>
+
+  @if (passwordSuccess) {
+    <p class="page-message message success">{{ passwordSuccess }}</p>
+  }
+
+  @if (passwordModalOpen) {
+    <div class="modal-backdrop" (click)="closePasswordModal()">
+      <section
+        class="password-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="password-modal-heading"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="modal-header">
+          <div>
+            <h2 id="password-modal-heading">Change Password</h2>
+            <p>{{ passwordRulesMessage }}</p>
+          </div>
+          <button
+            type="button"
+            class="close-button"
+            aria-label="Close change password dialog"
+            (click)="closePasswordModal()"
+            [disabled]="passwordSaving"
+          >
+            ×
+          </button>
+        </header>
+
+        <form class="profile-form" (ngSubmit)="savePassword()">
+          <label class="span-2">
+            Current password
+            <app-password-field
+              [(ngModel)]="currentPassword"
+              name="currentPassword"
+              autocomplete="current-password"
+              [required]="true"
+            />
+          </label>
+          <label>
+            New password
+            <app-password-field
+              [(ngModel)]="newPassword"
+              name="newPassword"
+              autocomplete="new-password"
+              [minlength]="8"
+              [required]="true"
+            />
+          </label>
+          <label>
+            Confirm new password
+            <app-password-field
+              [(ngModel)]="confirmPassword"
+              name="confirmPassword"
+              autocomplete="new-password"
+              [minlength]="8"
+              [required]="true"
+            />
+          </label>
+
+          @if (passwordError) {
+            <p class="message error span-2">{{ passwordError }}</p>
+          }
+
+          <div class="modal-actions span-2">
+            <button
+              type="button"
+              class="secondary-button"
+              (click)="closePasswordModal()"
+              [disabled]="passwordSaving"
+            >
+              Cancel
+            </button>
+            <button type="submit" [disabled]="passwordSaving">
+              {{ passwordSaving ? 'Updating…' : 'Update password' }}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
 </section>

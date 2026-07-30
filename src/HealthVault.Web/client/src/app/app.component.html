@@ -6,13 +6,15 @@
     </a>
 
     <div class="nav-links">
-      <a
-        routerLink="/"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        Home
-      </a>
+      @if (auth.isLoggedIn && !auth.mustChangePassword) {
+        <a
+          routerLink="/"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Home
+        </a>
+      }
       @if (auth.isAdmin && !auth.mustChangePassword) {
         <a routerLink="/admin" routerLinkActive="active">Admin</a>
       }

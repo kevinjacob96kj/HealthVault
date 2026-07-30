@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from './auth.service';
@@ -21,6 +21,7 @@ export class ProfileComponent implements OnInit {
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
+  passwordModalOpen = false;
 
   profileSaving = false;
   passwordSaving = false;
@@ -67,6 +68,34 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  openPasswordModal(): void {
+    this.passwordError = null;
+    this.passwordSuccess = null;
+    this.currentPassword = '';
+    this.newPassword = '';
+    this.confirmPassword = '';
+    this.passwordModalOpen = true;
+  }
+
+  closePasswordModal(): void {
+    if (this.passwordSaving) {
+      return;
+    }
+
+    this.passwordModalOpen = false;
+    this.passwordError = null;
+    this.currentPassword = '';
+    this.newPassword = '';
+    this.confirmPassword = '';
+  }
+
+  @HostListener('document:keydown.escape')
+  closePasswordModalOnEscape(): void {
+    if (this.passwordModalOpen) {
+      this.closePasswordModal();
+    }
+  }
+
   savePassword(): void {
     this.passwordError = null;
     this.passwordSuccess = null;
@@ -95,6 +124,7 @@ export class ProfileComponent implements OnInit {
           this.newPassword = '';
           this.confirmPassword = '';
           this.passwordSuccess = 'Password updated.';
+          this.passwordModalOpen = false;
           this.passwordSaving = false;
         },
         error: (err) => {

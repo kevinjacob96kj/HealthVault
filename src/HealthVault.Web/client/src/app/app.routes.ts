@@ -15,7 +15,7 @@ export const routes: Routes = [
   {
     path: '',
     component: HelloDoctorComponent,
-    canActivate: [passwordChangeRedirectGuard]
+    canActivate: [authGuard]
   },
   {
     path: 'login',
@@ -29,5 +29,5 @@ export const routes: Routes = [
   },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
   { path: 'admin', component: UsersComponent, canActivate: [adminGuard] },
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: 'login' }
 ];

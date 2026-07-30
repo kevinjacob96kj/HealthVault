@@ -1,9 +1,9 @@
 /*
-    HealthVault database setup
+    HealthVault schema setup/upgrade
 
-    Run this file in SQL Server Management Studio while connected to the
-    SQL Server instance you want to use. It is safe to run more than once:
-    existing tables and mock users are preserved.
+    Run this file first in SQL Server Management Studio. It creates the
+    HealthVault database when missing and upgrades an older HealthVault
+    database without deleting existing data.
 */
 
 USE [master];
@@ -15,9 +15,7 @@ BEGIN
     CREATE DATABASE [HealthVault];
 END
 ELSE
-BEGIN
     PRINT N'HealthVault database already exists.';
-END;
 GO
 
 USE [HealthVault];
@@ -29,16 +27,58 @@ BEGIN
 
     CREATE TABLE [dbo].[People]
     (
-        [Id]        int IDENTITY(1,1) NOT NULL,
-        [FirstName] nvarchar(100) NOT NULL,
-        [LastName]  nvarchar(100) NOT NULL,
-        [Email]     nvarchar(256) NOT NULL,
-        [Status]    nvarchar(50) NOT NULL,
-        [CreatedAt] datetime2 NOT NULL
+        [Id]                 int IDENTITY(1,1) NOT NULL,
+        [FirstName]          nvarchar(100) NOT NULL,
+        [LastName]           nvarchar(100) NOT NULL,
+        [Email]              nvarchar(256) NOT NULL,
+        [Password]           nvarchar(100) NOT NULL
+            CONSTRAINT [DF_People_Password] DEFAULT N'Password@1',
+        [Status]             nvarchar(50) NOT NULL,
+        [MustChangePassword] bit NOT NULL
+            CONSTRAINT [DF_People_MustChangePassword] DEFAULT (1),
+        [CreatedAt]          datetime2 NOT NULL
             CONSTRAINT [DF_People_CreatedAt] DEFAULT SYSUTCDATETIME(),
 
         CONSTRAINT [PK_People] PRIMARY KEY ([Id])
     );
+END;
+GO
+
+IF COL_LENGTH(N'dbo.People', N'Password') IS NULL
+BEGIN
+    PRINT N'Adding dbo.People.Password...';
+    ALTER TABLE [dbo].[People]
+        ADD [Password] nvarchar(100) NOT NULL
+            CONSTRAINT [DF_People_Password] DEFAULT N'Password@1';
+END;
+GO
+
+IF COL_LENGTH(N'dbo.People', N'MustChangePassword') IS NULL
+BEGIN
+    PRINT N'Adding dbo.People.MustChangePassword...';
+    ALTER TABLE [dbo].[People]
+        ADD [MustChangePassword] bit NOT NULL
+            CONSTRAINT [DF_People_MustChangePassword] DEFAULT (1);
+END;
+GO
+
+-- Upgrade only the former application default; custom passwords are preserved.
+UPDATE [dbo].[People]
+SET [Password] = N'Password@1',
+    [MustChangePassword] = 1
+WHERE [Password] = N'password';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE [object_id] = OBJECT_ID(N'dbo.People')
+      AND [name] = N'IX_People_Email'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_People_Email]
+        ON [dbo].[People] ([Email]);
 END;
 GO
 
@@ -65,87 +105,26 @@ BEGIN
 END;
 GO
 
-PRINT N'Adding mock people when missing...';
+IF OBJECT_ID(N'dbo.Requests', N'U') IS NULL
+BEGIN
+    PRINT N'Creating dbo.Requests...';
 
-INSERT INTO [dbo].[People] ([FirstName], [LastName], [Email], [Status])
-SELECT N'Ava', N'Chen', N'ava.chen@healthvault.test', N'Active'
-WHERE NOT EXISTS
-(
-    SELECT 1
-    FROM [dbo].[People]
-    WHERE [Email] = N'ava.chen@healthvault.test'
-);
+    CREATE TABLE [dbo].[Requests]
+    (
+        [Id]              bigint IDENTITY(1,1) NOT NULL,
+        [RequestApi]      nvarchar(512) NOT NULL,
+        [RequestDateTime] datetime2 NOT NULL
+            CONSTRAINT [DF_Requests_RequestDateTime] DEFAULT SYSUTCDATETIME(),
+        [WasSuccessful]   bit NOT NULL,
+        [RequestedBy]     nvarchar(256) NOT NULL,
 
-INSERT INTO [dbo].[People] ([FirstName], [LastName], [Email], [Status])
-SELECT N'Marco', N'Diaz', N'marco.diaz@healthvault.test', N'Active'
-WHERE NOT EXISTS
-(
-    SELECT 1
-    FROM [dbo].[People]
-    WHERE [Email] = N'marco.diaz@healthvault.test'
-);
+        CONSTRAINT [PK_Requests] PRIMARY KEY ([Id])
+    );
 
-INSERT INTO [dbo].[People] ([FirstName], [LastName], [Email], [Status])
-SELECT N'Priya', N'Nair', N'priya.nair@healthvault.test', N'Active'
-WHERE NOT EXISTS
-(
-    SELECT 1
-    FROM [dbo].[People]
-    WHERE [Email] = N'priya.nair@healthvault.test'
-);
-
-INSERT INTO [dbo].[People] ([FirstName], [LastName], [Email], [Status])
-SELECT N'Jordan', N'Lee', N'jordan.lee@healthvault.test', N'Inactive'
-WHERE NOT EXISTS
-(
-    SELECT 1
-    FROM [dbo].[People]
-    WHERE [Email] = N'jordan.lee@healthvault.test'
-);
+    CREATE INDEX [IX_Requests_RequestDateTime]
+        ON [dbo].[Requests] ([RequestDateTime]);
+END;
 GO
 
-PRINT N'Adding mock roles when missing...';
-
-INSERT INTO [dbo].[UserClaims] ([PersonId], [Role])
-SELECT p.[Id], roles.[Role]
-FROM [dbo].[People] AS p
-INNER JOIN
-(
-    VALUES
-        (N'ava.chen@healthvault.test', N'Admin'),
-        (N'ava.chen@healthvault.test', N'Staff'),
-        (N'marco.diaz@healthvault.test', N'Doctor'),
-        (N'priya.nair@healthvault.test', N'Nurse'),
-        (N'priya.nair@healthvault.test', N'Staff'),
-        (N'jordan.lee@healthvault.test', N'Patient')
-) AS roles ([Email], [Role])
-    ON roles.[Email] = p.[Email]
-WHERE NOT EXISTS
-(
-    SELECT 1
-    FROM [dbo].[UserClaims] AS existing
-    WHERE existing.[PersonId] = p.[Id]
-      AND existing.[Role] = roles.[Role]
-);
-GO
-
-PRINT N'HealthVault setup complete.';
-
-SELECT
-    p.[Id],
-    p.[FirstName],
-    p.[LastName],
-    p.[Email],
-    p.[Status],
-    STRING_AGG(c.[Role], N', ') WITHIN GROUP (ORDER BY c.[Role]) AS [Roles]
-FROM [dbo].[People] AS p
-LEFT JOIN [dbo].[UserClaims] AS c
-    ON c.[PersonId] = p.[Id]
-GROUP BY
-    p.[Id],
-    p.[FirstName],
-    p.[LastName],
-    p.[Email],
-    p.[Status]
-ORDER BY p.[Id];
+PRINT N'HealthVault schema setup complete.';
 GO

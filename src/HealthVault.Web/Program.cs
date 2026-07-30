@@ -1,4 +1,11 @@
+using FluentValidation;
+using HealthVault.Application.Common.Behaviors;
+using HealthVault.Application.People;
 using HealthVault.Persistence.Data;
+using HealthVault.Web.Authentication;
+using HealthVault.Web.Middleware;
+using MediatR;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -14,6 +21,18 @@ builder.Services
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddValidatorsFromAssemblyContaining<CreatePersonCommand>();
+builder.Services.AddMediatR(configuration =>
+{
+    configuration.RegisterServicesFromAssemblyContaining<CreatePersonCommand>();
+    configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
+});
+builder.Services
+    .AddAuthentication(HealthVaultAuthDefaults.Scheme)
+    .AddScheme<AuthenticationSchemeOptions, HealthVaultUserAuthenticationHandler>(
+        HealthVaultAuthDefaults.Scheme,
+        _ => { });
+builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowOrigin", policy =>
@@ -36,6 +55,9 @@ app.UseCors("AllowOrigin");
 app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UseAuthentication();
+app.UseMiddleware<ApiExceptionMiddleware>();
+app.UseMiddleware<ApiRequestLoggingMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.MapFallbackToFile("index.html");

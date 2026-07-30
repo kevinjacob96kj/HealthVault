@@ -1,74 +1,30 @@
 <section class="users-page">
   <header class="page-header">
-    <h1>Admin</h1>
-    <p>Manage people and their roles in HealthVault.</p>
+    <div class="header-text">
+      <h1>Admin</h1>
+      <p>Manage people, emails, and roles.</p>
+    </div>
+    @if (!loading && !error) {
+      <button type="button" class="add-user-button" (click)="openAddUser()">
+        Add user
+      </button>
+    }
   </header>
+
+  @if (createSuccess) {
+    <p class="banner success">{{ createSuccess }}</p>
+  }
 
   @if (loading) {
     <p class="status">Loading people…</p>
   } @else if (error) {
     <p class="status error">{{ error }}</p>
   } @else {
-    <section class="panel add-user" aria-labelledby="add-user-heading">
-      <h2 id="add-user-heading">Add user</h2>
-
-      <form class="add-form" (ngSubmit)="createPerson()">
-        <label>
-          First name
-          <input [(ngModel)]="newPerson.firstName" name="firstName" autocomplete="given-name" required />
-        </label>
-        <label>
-          Last name
-          <input [(ngModel)]="newPerson.lastName" name="lastName" autocomplete="family-name" required />
-        </label>
-        <label class="span-2">
-          Email
-          <input [(ngModel)]="newPerson.email" name="email" type="email" autocomplete="email" required />
-        </label>
-        <label>
-          Status
-          <select [(ngModel)]="newPerson.status" name="status">
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-        </label>
-
-        <fieldset class="roles-fieldset span-full">
-          <legend>Roles</legend>
-          <div class="role-grid">
-            @for (role of availableRoles; track role) {
-              <label class="role-option">
-                <input
-                  type="checkbox"
-                  [checked]="newPerson.roles.includes(role)"
-                  (change)="toggleNewRole(role, $any($event.target).checked)"
-                />
-                {{ role }}
-              </label>
-            }
-          </div>
-        </fieldset>
-
-        <div class="form-actions span-full">
-          <button type="submit" [disabled]="creating">
-            {{ creating ? 'Adding…' : 'Add user' }}
-          </button>
-        </div>
-      </form>
-
-      @if (formError) {
-        <p class="inline-message error">{{ formError }}</p>
-      }
-      @if (createSuccess) {
-        <p class="inline-message success">{{ createSuccess }}</p>
-      }
-    </section>
-
     <section class="panel people-panel" aria-labelledby="people-heading">
       <h2 id="people-heading">People</h2>
 
       @if (people.length === 0) {
-        <p class="empty">No people yet. Add a user above.</p>
+        <p class="empty">No people yet. Use Add user to create one.</p>
       } @else {
         <div class="accordion">
           @for (person of people; track person.id) {
@@ -143,5 +99,74 @@
         </div>
       }
     </section>
+  }
+
+  @if (addUserOpen) {
+    <div class="dialog-backdrop" (click)="closeAddUser()"></div>
+    <div
+      class="add-user-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-user-heading"
+    >
+      <div class="dialog-header">
+        <div>
+          <h2 id="add-user-heading">Add user</h2>
+          <p class="panel-note">Default password: {{ defaultPassword }}</p>
+        </div>
+        <button type="button" class="dialog-close" (click)="closeAddUser()" aria-label="Close">
+          Close
+        </button>
+      </div>
+
+      <form class="add-form" (ngSubmit)="createPerson()">
+        <label>
+          First name
+          <input [(ngModel)]="newPerson.firstName" name="firstName" autocomplete="given-name" required />
+        </label>
+        <label>
+          Last name
+          <input [(ngModel)]="newPerson.lastName" name="lastName" autocomplete="family-name" required />
+        </label>
+        <label class="span-2">
+          Email
+          <input [(ngModel)]="newPerson.email" name="email" type="email" autocomplete="email" required />
+        </label>
+        <label>
+          Status
+          <select [(ngModel)]="newPerson.status" name="status">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </label>
+
+        <fieldset class="roles-fieldset span-full">
+          <legend>Roles</legend>
+          <div class="role-grid">
+            @for (role of availableRoles; track role) {
+              <label class="role-option">
+                <input
+                  type="checkbox"
+                  [checked]="newPerson.roles.includes(role)"
+                  (change)="toggleNewRole(role, $any($event.target).checked)"
+                />
+                {{ role }}
+              </label>
+            }
+          </div>
+        </fieldset>
+
+        <div class="form-actions span-full">
+          <button type="button" class="secondary" (click)="closeAddUser()">Cancel</button>
+          <button type="submit" [disabled]="creating">
+            {{ creating ? 'Adding…' : 'Add user' }}
+          </button>
+        </div>
+      </form>
+
+      @if (formError) {
+        <p class="inline-message error">{{ formError }}</p>
+      }
+    </div>
   }
 </section>

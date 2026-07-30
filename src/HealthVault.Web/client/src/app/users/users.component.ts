@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { PeopleService } from './people.service';
 import { Person } from './person.model';
+import { DEFAULT_PASSWORD } from '../auth/password.util';
 
 @Component({
   selector: 'app-users',
@@ -22,9 +23,11 @@ export class UsersComponent implements OnInit {
   expandedId: number | null = null;
   savingId: number | null = null;
   creating = false;
+  addUserOpen = false;
   formError: string | null = null;
   roleError: string | null = null;
   createSuccess: string | null = null;
+  readonly defaultPassword = DEFAULT_PASSWORD;
 
   draftRoles: Record<number, string[]> = {};
 
@@ -52,6 +55,17 @@ export class UsersComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  openAddUser(): void {
+    this.addUserOpen = true;
+    this.formError = null;
+    this.createSuccess = null;
+  }
+
+  closeAddUser(): void {
+    this.addUserOpen = false;
+    this.formError = null;
   }
 
   toggleAccordion(id: number): void {
@@ -114,7 +128,11 @@ export class UsersComponent implements OnInit {
     this.formError = null;
     this.createSuccess = null;
 
-    if (!this.newPerson.firstName.trim() || !this.newPerson.lastName.trim() || !this.newPerson.email.trim()) {
+    if (
+      !this.newPerson.firstName.trim() ||
+      !this.newPerson.lastName.trim() ||
+      !this.newPerson.email.trim()
+    ) {
       this.formError = 'First name, last name, and email are required.';
       return;
     }
@@ -139,12 +157,16 @@ export class UsersComponent implements OnInit {
             status: 'Active',
             roles: []
           };
-          this.createSuccess = `Added ${person.firstName} ${person.lastName}.`;
+          this.createSuccess = `Added ${person.firstName} ${person.lastName}. Default password is "${DEFAULT_PASSWORD}".`;
           this.expandedId = person.id;
           this.creating = false;
+          this.addUserOpen = false;
         },
-        error: () => {
-          this.formError = 'Unable to create the new user.';
+        error: (err) => {
+          this.formError =
+            err?.error?.title ??
+            Object.values(err?.error?.errors ?? {}).flat()[0]?.toString() ??
+            'Unable to create the new user.';
           this.creating = false;
         }
       });

@@ -9,9 +9,17 @@
 }
 
 .page-header,
-.panel {
+.panel,
+.banner {
   max-width: 72rem;
   margin: 0 auto 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .page-header h1 {
@@ -28,12 +36,19 @@
 }
 
 .status.error,
-.inline-message.error {
+.inline-message.error,
+.banner.error {
   color: #9b2c2c;
 }
 
-.inline-message.success {
+.inline-message.success,
+.banner.success {
   color: #11685f;
+}
+
+.banner {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
 }
 
 .panel {
@@ -43,9 +58,16 @@
   padding: 1.25rem 1.35rem 1.5rem;
 }
 
-.panel h2 {
-  margin: 0 0 1rem;
+.panel h2,
+.dialog-header h2 {
+  margin: 0 0 0.35rem;
   font-size: 1.15rem;
+}
+
+.panel-note {
+  margin: 0;
+  color: #3d5c63;
+  font-size: 0.9rem;
 }
 
 .add-form {
@@ -121,6 +143,7 @@ select {
 .panel-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 0.65rem;
 }
 
 button {
@@ -133,14 +156,60 @@ button {
   cursor: pointer;
 }
 
+button.secondary,
+.dialog-close {
+  background: #e8f0ee;
+  color: #12343b;
+}
+
 button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
+.add-user-button {
+  flex-shrink: 0;
+}
+
 .inline-message {
   margin: 0.9rem 0 0;
   font-size: 0.95rem;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(18, 52, 59, 0.35);
+}
+
+.add-user-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  width: min(calc(100vw - 2rem), 32rem);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  transform: translate(-50%, -50%);
+  padding: 1.25rem 1.35rem 1.4rem;
+  background: #fff;
+  border: 1px solid #d9e7e4;
+  border-radius: 0.85rem;
+  box-shadow: 0 18px 48px rgba(18, 52, 59, 0.18);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.dialog-close {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.9rem;
 }
 
 .accordion {
@@ -267,6 +336,11 @@ button:disabled {
 }
 
 @media (max-width: 40rem) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .add-form {
     grid-template-columns: 1fr;
   }

@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Person> People => Set<Person>();
     public DbSet<UserClaim> UserClaims => Set<UserClaim>();
+    public DbSet<ApiRequest> Requests => Set<ApiRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,8 +23,11 @@ public class AppDbContext : DbContext
             entity.Property(e => e.FirstName).HasMaxLength(100).IsRequired();
             entity.Property(e => e.LastName).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Password).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Status).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.MustChangePassword).IsRequired();
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+            entity.HasIndex(e => e.Email).IsUnique();
         });
 
         modelBuilder.Entity<UserClaim>(entity =>
@@ -36,6 +40,19 @@ public class AppDbContext : DbContext
                 .WithMany(p => p.Claims)
                 .HasForeignKey(e => e.PersonId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApiRequest>(entity =>
+        {
+            entity.ToTable("Requests", "dbo");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RequestApi).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.RequestDateTime)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .IsRequired();
+            entity.Property(e => e.WasSuccessful).IsRequired();
+            entity.Property(e => e.RequestedBy).HasMaxLength(256).IsRequired();
+            entity.HasIndex(e => e.RequestDateTime);
         });
     }
 }

@@ -19,6 +19,11 @@ src/
   HealthVault.sln
   HealthVault.Domain/
     HealthVault.Domain.csproj
+  HealthVault.Application/
+    Common/
+    People/
+    Requests/
+    HealthVault.Application.csproj
   HealthVault.Persistence/
     Data/
       AppDbContext.cs
@@ -32,9 +37,9 @@ src/
     HealthVault.Web.csproj
 ```
 
-The project currently contains infrastructure only. Domain models, API
-operations, database migrations, authentication, and business logic have not
-been implemented.
+API operations use thin controllers that send commands and queries through
+MediatR. Their handlers and FluentValidation validators live in the Application
+project.
 
 ## Configuration
 

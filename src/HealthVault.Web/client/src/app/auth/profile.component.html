@@ -1,0 +1,88 @@
+<section class="profile-page">
+  <header class="page-header">
+    <h1>Your profile</h1>
+    <p>Update your name and password.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="profile-details-heading">
+    <h2 id="profile-details-heading">Profile details</h2>
+
+    <form class="profile-form" (ngSubmit)="saveProfile()">
+      <label>
+        First name
+        <input [(ngModel)]="firstName" name="firstName" autocomplete="given-name" required />
+      </label>
+      <label>
+        Last name
+        <input [(ngModel)]="lastName" name="lastName" autocomplete="family-name" required />
+      </label>
+      <label class="span-2">
+        Email
+        <input [ngModel]="email" name="email" type="email" disabled />
+      </label>
+
+      <div class="form-actions span-2">
+        <button type="submit" [disabled]="profileSaving">
+          {{ profileSaving ? 'Saving…' : 'Save profile' }}
+        </button>
+      </div>
+    </form>
+
+    @if (profileError) {
+      <p class="message error">{{ profileError }}</p>
+    }
+    @if (profileSuccess) {
+      <p class="message success">{{ profileSuccess }}</p>
+    }
+  </section>
+
+  <section class="panel" aria-labelledby="password-heading">
+    <h2 id="password-heading">Change password</h2>
+    <p class="panel-note">{{ passwordRulesMessage }}</p>
+
+    <form class="profile-form" (ngSubmit)="savePassword()">
+      <label class="span-2">
+        Current password
+        <app-password-field
+          [(ngModel)]="currentPassword"
+          name="currentPassword"
+          autocomplete="current-password"
+          [required]="true"
+        />
+      </label>
+      <label>
+        New password
+        <app-password-field
+          [(ngModel)]="newPassword"
+          name="newPassword"
+          autocomplete="new-password"
+          [minlength]="8"
+          [required]="true"
+        />
+      </label>
+      <label>
+        Confirm new password
+        <app-password-field
+          [(ngModel)]="confirmPassword"
+          name="confirmPassword"
+          autocomplete="new-password"
+          [minlength]="8"
+          [required]="true"
+        />
+      </label>
+
+      <div class="form-actions span-2">
+        <button type="submit" [disabled]="passwordSaving">
+          {{ passwordSaving ? 'Updating…' : 'Update password' }}
+        </button>
+      </div>
+    </form>
+
+    @if (passwordError) {
+      <p class="message error">{{ passwordError }}</p>
+    }
+    @if (passwordSuccess) {
+      <p class="message success">{{ passwordSuccess }}</p>
+    }
+  </section>
+</section>

@@ -13,8 +13,27 @@
       >
         Home
       </a>
-      <a routerLink="/admin" routerLinkActive="active">Admin</a>
-      <a href="/swagger">API Docs</a>
+      @if (auth.isAdmin && !auth.mustChangePassword) {
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      }
+
+      @if (auth.isLoggedIn) {
+        <div class="user-menu">
+          <button type="button" class="user-chip" aria-haspopup="true">
+            {{ auth.displayName }}
+          </button>
+          <div class="user-menu-panel" role="menu">
+            @if (!auth.mustChangePassword) {
+              <a routerLink="/profile" role="menuitem">View profile</a>
+            }
+            <button type="button" role="menuitem" (click)="auth.logout()">
+              Sign out
+            </button>
+          </div>
+        </div>
+      } @else {
+        <a routerLink="/login" routerLinkActive="active">Sign in</a>
+      }
     </div>
   </nav>
 </header>

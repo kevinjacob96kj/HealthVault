@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from './auth.service';
 import { isStrongPassword, PASSWORD_RULES_MESSAGE } from './password.util';
 import { PasswordFieldComponent } from './password-field.component';
+import { PatientsService } from '../patients/patients.service';
+import { Patient } from '../patients/patient.model';
 
 @Component({
   selector: 'app-profile',
@@ -14,6 +16,7 @@ import { PasswordFieldComponent } from './password-field.component';
 })
 export class ProfileComponent implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly patientsService = inject(PatientsService);
 
   firstName = '';
   lastName = '';
@@ -23,6 +26,10 @@ export class ProfileComponent implements OnInit {
   confirmPassword = '';
   passwordModalOpen = false;
 
+  patientRecord: Patient | null = null;
+  patientLoading = false;
+  patientError: string | null = null;
+
   profileSaving = false;
   passwordSaving = false;
   profileError: string | null = null;
@@ -30,6 +37,10 @@ export class ProfileComponent implements OnInit {
   passwordError: string | null = null;
   passwordSuccess: string | null = null;
   readonly passwordRulesMessage = PASSWORD_RULES_MESSAGE;
+
+  get isPatient(): boolean {
+    return this.auth.isPatient;
+  }
 
   ngOnInit(): void {
     const user = this.auth.user;
@@ -40,6 +51,23 @@ export class ProfileComponent implements OnInit {
     this.firstName = user.firstName;
     this.lastName = user.lastName;
     this.email = user.email;
+
+    if (this.auth.isPatient) {
+      this.loadPatientRecord();
+    }
+  }
+
+  formatDate(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   }
 
   saveProfile(): void {
@@ -133,5 +161,21 @@ export class ProfileComponent implements OnInit {
           this.passwordSaving = false;
         }
       });
+  }
+
+  private loadPatientRecord(): void {
+    this.patientLoading = true;
+    this.patientError = null;
+
+    this.patientsService.getMyPatient().subscribe({
+      next: (patient) => {
+        this.patientRecord = patient;
+        this.patientLoading = false;
+      },
+      error: () => {
+        this.patientError = 'Unable to load your patient record.';
+        this.patientLoading = false;
+      }
+    });
   }
 }

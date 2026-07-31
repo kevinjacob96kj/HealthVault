@@ -22,4 +22,8 @@ export class PeopleService {
   updateRoles(id: number, roles: string[]): Observable<Person> {
     return this.http.put<Person>(`/api/people/${id}/roles`, { roles });
   }
+
+  updateActive(id: number, isActive: boolean): Observable<Person> {
+    return this.http.put<Person>(`/api/people/${id}/active`, { isActive });
+  }
 }

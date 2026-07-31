@@ -51,5 +51,23 @@ public class ApiExceptionMiddleware
                 status = StatusCodes.Status401Unauthorized
             });
         }
+        catch (InvalidOperationException exception)
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsJsonAsync(new
+            {
+                title = exception.Message,
+                status = StatusCodes.Status500InternalServerError
+            });
+        }
+        catch (System.Net.Mail.SmtpException exception)
+        {
+            context.Response.StatusCode = StatusCodes.Status502BadGateway;
+            await context.Response.WriteAsJsonAsync(new
+            {
+                title = $"Unable to send email: {exception.Message}",
+                status = StatusCodes.Status502BadGateway
+            });
+        }
     }
 }

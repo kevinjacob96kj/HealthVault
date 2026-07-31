@@ -1,0 +1,183 @@
+<section class="signup-page">
+  <div class="signup-card">
+    <h1>Patient signup</h1>
+    <p>
+      @if (step === 'identity') {
+        First time here? Enter your ABHA ID, Aadhaar number, and date of birth.
+      } @else {
+        Create your login with Google or a username and password.
+      }
+    </p>
+
+    <div class="steps" aria-hidden="true">
+      <span [class.active]="step === 'identity'">1. Identity</span>
+      <span [class.active]="step === 'account'">2. Login</span>
+    </div>
+
+    @if (step === 'identity') {
+      <form class="signup-form" (ngSubmit)="continueIdentity()">
+        <label>
+          ABHA ID
+          <input
+            [ngModel]="abhaId"
+            (ngModelChange)="onAbhaIdInput($event)"
+            name="abhaId"
+            type="text"
+            inputmode="numeric"
+            maxlength="17"
+            autocomplete="off"
+            required
+          />
+        </label>
+
+        <label>
+          Aadhaar number
+          <input
+            [ngModel]="aadhaarNumber"
+            (ngModelChange)="onAadhaarInput($event)"
+            name="aadhaarNumber"
+            type="text"
+            inputmode="numeric"
+            maxlength="12"
+            autocomplete="off"
+            required
+          />
+        </label>
+
+        <label>
+          Date of birth
+          <input
+            [(ngModel)]="dateOfBirth"
+            name="dateOfBirth"
+            type="date"
+            required
+          />
+        </label>
+
+        @if (error) {
+          <p class="error">{{ error }}</p>
+        }
+
+        <button type="submit" [disabled]="submitting">
+          {{ submitting ? 'Verifying…' : 'Continue' }}
+        </button>
+      </form>
+    } @else {
+      <div class="account-panel">
+        @if (info) {
+          <p class="info">{{ info }}</p>
+        }
+
+        <div class="google-block">
+          <h2>Continue with Google</h2>
+          @if (googleConfig?.clientId) {
+            <div id="google-signup-button" class="google-button-host"></div>
+          } @else if (googleConfig?.allowDemoSignIn) {
+            @if (!showDemoGoogle) {
+              <button type="button" class="google-demo-button" (click)="openDemoGoogle()">
+                Continue with Google
+              </button>
+              <p class="hint">Local demo mode — no Google Client ID configured.</p>
+            } @else {
+              <label>
+                Google email
+                <input [(ngModel)]="demoGoogleEmail" name="demoGoogleEmail" type="email" />
+              </label>
+              <label>
+                First name
+                <input [(ngModel)]="demoGoogleFirstName" name="demoGoogleFirstName" />
+              </label>
+              <label>
+                Last name
+                <input [(ngModel)]="demoGoogleLastName" name="demoGoogleLastName" />
+              </label>
+              <button type="button" (click)="submitDemoGoogle()" [disabled]="submitting">
+                {{ submitting ? 'Creating account…' : 'Continue with Google' }}
+              </button>
+            }
+          } @else {
+            <p class="hint">Google sign-in is not configured.</p>
+          }
+        </div>
+
+        <div class="divider"><span>or create a username &amp; password</span></div>
+
+        <form class="signup-form" (ngSubmit)="createAccount()">
+          <label>
+            Username (email)
+            <input
+              [(ngModel)]="email"
+              name="email"
+              type="email"
+              autocomplete="username"
+              required
+            />
+          </label>
+
+          <label>
+            First name
+            <input [(ngModel)]="firstName" name="firstName" autocomplete="given-name" required />
+          </label>
+
+          <label>
+            Last name
+            <input [(ngModel)]="lastName" name="lastName" autocomplete="family-name" required />
+          </label>
+
+          <label>
+            Gender
+            <select [(ngModel)]="gender" name="gender">
+              <option value="Man">Man</option>
+              <option value="Women">Women</option>
+              <option value="Transgender">Transgender</option>
+            </select>
+          </label>
+
+          <label>
+            Mobile (optional)
+            <input [(ngModel)]="mobileNumber" name="mobileNumber" autocomplete="tel" />
+          </label>
+
+          <label>
+            Password
+            <app-password-field
+              [(ngModel)]="password"
+              name="password"
+              autocomplete="new-password"
+              [required]="true"
+            />
+          </label>
+
+          <label>
+            Confirm password
+            <app-password-field
+              [(ngModel)]="confirmPassword"
+              name="confirmPassword"
+              autocomplete="new-password"
+              [required]="true"
+            />
+          </label>
+
+          <p class="hint">{{ passwordRulesMessage }}</p>
+
+          @if (error) {
+            <p class="error">{{ error }}</p>
+          }
+
+          <button type="submit" [disabled]="submitting">
+            {{ submitting ? 'Creating account…' : 'Create account &amp; sign in' }}
+          </button>
+        </form>
+
+        <button type="button" class="link-button" (click)="backToIdentity()">
+          Back to identity
+        </button>
+      </div>
+    }
+
+    <p class="footer-link">
+      Already have an account?
+      <a routerLink="/login">Sign in</a>
+    </p>
+  </div>
+</section>

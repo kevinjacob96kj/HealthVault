@@ -17,7 +17,7 @@ public class GetAvailableRolesHandler
         GetAvailableRolesQuery request,
         CancellationToken cancellationToken)
     {
-        var roles = PeopleRoles.Allowed
+        var roles = PeopleRoles.HospitalAssignable
             .OrderBy(role => role)
             .ToList();
 

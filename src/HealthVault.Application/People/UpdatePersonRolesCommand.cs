@@ -7,11 +7,12 @@ using Microsoft.EntityFrameworkCore;
 namespace HealthVault.Application.People;
 
 /// <summary>
-/// Command that replaces the roles assigned to a person.
+/// Command that replaces the roles assigned to a person at the admin's hospital.
 /// </summary>
 public record UpdatePersonRolesCommand : IRequest<PersonModel>
 {
     public int PersonId { get; init; }
+    public string RequestedByEmail { get; init; } = string.Empty;
     public IReadOnlyList<string> Roles { get; init; } = [];
 }
 
@@ -26,9 +27,14 @@ public class UpdatePersonRolesCommandValidator
         RuleFor(command => command.PersonId)
             .GreaterThan(0);
 
+        RuleFor(command => command.RequestedByEmail)
+            .NotEmpty()
+            .EmailAddress()
+            .MaximumLength(256);
+
         RuleFor(command => command.Roles)
-            .Must(PeopleRoles.AreValid)
-            .WithMessage($"Roles must be one of: {string.Join(", ", PeopleRoles.Allowed)}.");
+            .Must(PeopleRoles.AreHospitalAssignable)
+            .WithMessage($"Roles must be one of: {string.Join(", ", PeopleRoles.HospitalAssignable)}.");
     }
 }
 
@@ -49,6 +55,11 @@ public class UpdatePersonRolesHandler
         UpdatePersonRolesCommand request,
         CancellationToken cancellationToken)
     {
+        var providerId = await HospitalStaffScope.GetRequiredProviderIdAsync(
+            _context,
+            request.RequestedByEmail,
+            cancellationToken);
+
         var person = await _context.People
             .Include(item => item.Claims)
             .SingleOrDefaultAsync(
@@ -61,7 +72,13 @@ public class UpdatePersonRolesHandler
                 $"Person {request.PersonId} was not found.");
         }
 
-        var roles = PeopleRoles.Normalize(request.Roles);
+        await HospitalStaffScope.EnsurePersonIsAtProviderAsync(
+            _context,
+            providerId,
+            person.Id,
+            cancellationToken);
+
+        var roles = PeopleRoles.NormalizeHospitalAssignable(request.Roles);
         _context.UserClaims.RemoveRange(person.Claims);
         person.Claims = roles
             .Select(role => new UserClaim
@@ -73,12 +90,17 @@ public class UpdatePersonRolesHandler
 
         await _context.SaveChangesAsync(cancellationToken);
 
+        var isActive = await HospitalStaffScope.GetIsActiveAsync(
+            _context,
+            person.Id,
+            cancellationToken);
+
         return new PersonModel(
             person.Id,
             person.FirstName,
             person.LastName,
             person.Email,
-            person.Status,
+            isActive,
             roles);
     }
 }

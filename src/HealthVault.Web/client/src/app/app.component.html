@@ -15,8 +15,14 @@
           Home
         </a>
       }
-      @if (auth.isAdmin && !auth.mustChangePassword) {
+      @if (auth.canAccessAdmin && !auth.mustChangePassword) {
         <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      }
+      @if (auth.isPatient && !auth.mustChangePassword) {
+        <a routerLink="/find-doctor" routerLinkActive="active">Find a Doctor</a>
+      }
+      @if (auth.isDoctor && !auth.mustChangePassword) {
+        <a routerLink="/patients" routerLinkActive="active">Patients</a>
       }
 
       @if (auth.isLoggedIn) {

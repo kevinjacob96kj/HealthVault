@@ -24,6 +24,11 @@ public record LoginCommand : IRequest<LoginUserModel>
 {
     public string Email { get; init; } = string.Empty;
     public string Password { get; init; } = string.Empty;
+
+    /// <summary>
+    /// "staff" or "patient" — limits which roles may sign in on each form.
+    /// </summary>
+    public string Mode { get; init; } = "staff";
 }
 
 /// <summary>
@@ -41,6 +46,10 @@ public class LoginCommandValidator : AbstractValidator<LoginCommand>
         RuleFor(command => command.Password)
             .NotEmpty()
             .MaximumLength(100);
+
+        RuleFor(command => command.Mode)
+            .Must(mode => mode is "staff" or "patient")
+            .WithMessage("Mode must be staff or patient.");
     }
 }
 
@@ -49,6 +58,15 @@ public class LoginCommandValidator : AbstractValidator<LoginCommand>
 /// </summary>
 public class LoginHandler : IRequestHandler<LoginCommand, LoginUserModel>
 {
+    private static readonly HashSet<string> StaffRoles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Admin",
+        "CentralAdmin",
+        "Doctor",
+        "Nurse",
+        "Staff"
+    };
+
     private readonly AppDbContext _context;
 
     public LoginHandler(AppDbContext context)
@@ -62,6 +80,7 @@ public class LoginHandler : IRequestHandler<LoginCommand, LoginUserModel>
     {
         var email = request.Email.Trim();
         var password = request.Password.Trim();
+        var mode = request.Mode.Trim().ToLowerInvariant();
 
         var person = await _context.People
             .AsNoTracking()
@@ -71,10 +90,53 @@ public class LoginHandler : IRequestHandler<LoginCommand, LoginUserModel>
                 cancellationToken);
 
         if (person is null ||
-            !string.Equals(person.Status, "Active", StringComparison.OrdinalIgnoreCase) ||
             !string.Equals(person.Password, password, StringComparison.Ordinal))
         {
             throw new UnauthorizedAccessException("Invalid email or password.");
+        }
+
+        var roles = person.Claims
+            .Select(claim => claim.Role)
+            .OrderBy(role => role)
+            .ToList();
+
+        var hasStaffRole = roles.Any(role => StaffRoles.Contains(role));
+        var hasPatientRole = roles.Any(role => PatientAuthHelper.PatientRole.Contains(role));
+
+        if (mode == "patient")
+        {
+            if (!hasPatientRole)
+            {
+                throw new UnauthorizedAccessException("Invalid email or password.");
+            }
+
+            var patientIsActive = await _context.Patients
+                .AsNoTracking()
+                .Where(patient => patient.PersonId == person.Id)
+                .Select(patient => (bool?)patient.IsActive)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (patientIsActive == false)
+            {
+                throw new UnauthorizedAccessException("Invalid email or password.");
+            }
+        }
+        else if (!hasStaffRole)
+        {
+            throw new UnauthorizedAccessException("Invalid email or password.");
+        }
+        else
+        {
+            var staffIsActive = await _context.HealthcareStaff
+                .AsNoTracking()
+                .Where(staff => staff.PersonId == person.Id)
+                .Select(staff => (bool?)staff.IsActive)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (staffIsActive == false)
+            {
+                throw new UnauthorizedAccessException("Invalid email or password.");
+            }
         }
 
         return new LoginUserModel(
@@ -83,9 +145,6 @@ public class LoginHandler : IRequestHandler<LoginCommand, LoginUserModel>
             person.LastName,
             person.Email,
             person.MustChangePassword,
-            person.Claims
-                .Select(claim => claim.Role)
-                .OrderBy(role => role)
-                .ToList());
+            roles);
     }
 }

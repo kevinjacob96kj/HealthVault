@@ -335,6 +335,49 @@ button:disabled {
   margin-top: 0.9rem;
 }
 
+.provider-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.provider-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #d9e7e4;
+  border-radius: 0.65rem;
+  background: #f8fcfb;
+}
+
+.provider-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.provider-meta {
+  margin: 0;
+  color: #3d5c63;
+  font-size: 0.9rem;
+}
+
+.provider-side {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.provider-dialog {
+  max-width: 42rem;
+}
+
+.nested-form {
+  margin-top: 0.75rem;
+}
+
 @media (max-width: 40rem) {
   .page-header {
     flex-direction: column;
@@ -354,7 +397,9 @@ button:disabled {
     align-items: flex-start;
   }
 
-  .person-side {
-    justify-content: flex-start;
+  .person-side,
+  .provider-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

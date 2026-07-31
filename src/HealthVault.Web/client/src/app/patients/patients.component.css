@@ -1,0 +1,72 @@
+.patients-page {
+  min-height: calc(100vh - 4.25rem);
+  padding: 2rem clamp(1rem, 4vw, 2.5rem) 3rem;
+  background:
+    radial-gradient(circle at top left, #d7efe8 0%, transparent 45%),
+    radial-gradient(circle at bottom right, #e8f2f7 0%, transparent 40%),
+    #f7fbfa;
+  color: #12343b;
+}
+
+.page-header {
+  max-width: 72rem;
+  margin: 0 auto 1.5rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  letter-spacing: -0.02em;
+}
+
+.page-header p,
+.status {
+  margin: 0;
+  color: #3d5c63;
+}
+
+.status {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.status.error {
+  color: #9b2c2c;
+}
+
+.table-wrap {
+  max-width: 72rem;
+  margin: 0 auto;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #d9e7e4;
+  border-radius: 0.75rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+th,
+td {
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5efec;
+  white-space: nowrap;
+}
+
+th {
+  background: #f2f8f6;
+  color: #3d5c63;
+  font-weight: 600;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: #f7fbfa;
+}

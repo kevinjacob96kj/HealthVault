@@ -1,8 +1,11 @@
 using FluentValidation;
+using HealthVault.Application.Auth;
 using HealthVault.Application.Common.Behaviors;
+using HealthVault.Application.Email;
 using HealthVault.Application.People;
 using HealthVault.Persistence.Data;
 using HealthVault.Web.Authentication;
+using HealthVault.Web.Email;
 using HealthVault.Web.Middleware;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
@@ -42,6 +45,25 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HealthVaultCon")));
+builder.Services.AddSingleton<PatientOtpStore>();
+builder.Services.AddSingleton<PatientSignupSessionStore>();
+builder.Services
+    .AddOptions<EmailOptions>()
+    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services
+    .AddOptions<GoogleAuthOptions>()
+    .Bind(builder.Configuration.GetSection(GoogleAuthOptions.SectionName));
+builder.Services.AddHttpClient<IGoogleIdentityService, GoogleIdentityService>();
+
+var emailProvider = builder.Configuration.GetValue<string>("Email:Provider") ?? "Console";
+if (string.Equals(emailProvider, "Smtp", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+}
+else
+{
+    builder.Services.AddSingleton<IEmailSender, ConsoleEmailSender>();
+}
 
 var app = builder.Build();
 

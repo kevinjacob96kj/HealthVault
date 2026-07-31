@@ -1,0 +1,45 @@
+<section class="patients-page">
+  <header class="page-header">
+    <h1>Patients</h1>
+    <p>Patients who have assigned you as their doctor.</p>
+  </header>
+
+  @if (loading) {
+    <p class="status">Loading patients…</p>
+  } @else if (error) {
+    <p class="status error">{{ error }}</p>
+  } @else if (patients.length === 0) {
+    <p class="status">No active patients assigned to you yet.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">ABHA ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Date of Birth</th>
+            <th scope="col">Gender</th>
+            <th scope="col">Email</th>
+            <th scope="col">Mobile</th>
+            <th scope="col">Assigned</th>
+            <th scope="col">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (patient of patients; track patient.id) {
+            <tr>
+              <td>{{ patient.abhaId }}</td>
+              <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+              <td>{{ formatDate(patient.dateOfBirth) }}</td>
+              <td>{{ patient.gender }}</td>
+              <td>{{ patient.email }}</td>
+              <td>{{ patient.mobileNumber }}</td>
+              <td>{{ formatDate(patient.assignedAt) }}</td>
+              <td>{{ patient.notes || '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

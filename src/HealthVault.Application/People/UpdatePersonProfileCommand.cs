@@ -69,12 +69,17 @@ public class UpdatePersonProfileHandler
         person.LastName = request.LastName.Trim();
         await _context.SaveChangesAsync(cancellationToken);
 
+        var isActive = await HospitalStaffScope.GetIsActiveAsync(
+            _context,
+            person.Id,
+            cancellationToken);
+
         return new PersonModel(
             person.Id,
             person.FirstName,
             person.LastName,
             person.Email,
-            person.Status,
+            isActive,
             person.Claims
                 .Select(claim => claim.Role)
                 .OrderBy(role => role)

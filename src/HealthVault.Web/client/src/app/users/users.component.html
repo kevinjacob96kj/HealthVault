@@ -2,12 +2,22 @@
   <header class="page-header">
     <div class="header-text">
       <h1>Admin</h1>
-      <p>Manage people, emails, and roles.</p>
+      @if (auth.isCentralAdmin) {
+        <p>Create healthcare providers and their first hospital admin.</p>
+      } @else {
+        <p>Manage staff and roles at your hospital only. Each hospital must keep at least one Admin.</p>
+      }
     </div>
     @if (!loading && !error) {
-      <button type="button" class="add-user-button" (click)="openAddUser()">
-        Add user
-      </button>
+      @if (auth.isCentralAdmin) {
+        <button type="button" class="add-user-button" (click)="openAddProvider()">
+          Create hospital
+        </button>
+      } @else {
+        <button type="button" class="add-user-button" (click)="openAddUser()">
+          Add user
+        </button>
+      }
     }
   </header>
 
@@ -16,15 +26,43 @@
   }
 
   @if (loading) {
-    <p class="status">Loading people…</p>
+    <p class="status">Loading…</p>
   } @else if (error) {
     <p class="status error">{{ error }}</p>
+  } @else if (auth.isCentralAdmin) {
+    <section class="panel people-panel" aria-labelledby="providers-heading">
+      <h2 id="providers-heading">Healthcare providers</h2>
+
+      @if (providers.length === 0) {
+        <p class="empty">No providers yet. Use Create hospital to add one with an admin.</p>
+      } @else {
+        <div class="provider-list">
+          @for (provider of providers; track provider.id) {
+            <article class="provider-card">
+              <div class="provider-main">
+                <h3>{{ provider.name }}</h3>
+                <p class="provider-meta">
+                  {{ provider.providerCode }} · {{ provider.providerType }} ·
+                  {{ provider.city }}, {{ provider.state }}
+                </p>
+              </div>
+              <div class="provider-side">
+                <span class="status-pill" [class.inactive]="!provider.isActive">
+                  {{ provider.isActive ? 'Active' : 'Inactive' }}
+                </span>
+                <span class="role-chip">{{ provider.adminCount }} Admin{{ provider.adminCount === 1 ? '' : 's' }}</span>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
   } @else {
     <section class="panel people-panel" aria-labelledby="people-heading">
-      <h2 id="people-heading">People</h2>
+      <h2 id="people-heading">Hospital staff</h2>
 
       @if (people.length === 0) {
-        <p class="empty">No people yet. Use Add user to create one.</p>
+        <p class="empty">No staff at your hospital yet. Use Add user to create one.</p>
       } @else {
         <div class="accordion">
           @for (person of people; track person.id) {
@@ -42,8 +80,8 @@
                     <span class="person-meta">{{ person.email }}</span>
                   </span>
                   <span class="person-side">
-                    <span class="status-pill" [class.inactive]="person.status === 'Inactive'">
-                      {{ person.status }}
+                    <span class="status-pill" [class.inactive]="!person.isActive">
+                      {{ person.isActive ? 'Active' : 'Inactive' }}
                     </span>
                     <span class="role-chips">
                       @if (person.roles.length === 0) {
@@ -65,13 +103,37 @@
                 [hidden]="!isExpanded(person.id)"
               >
                 <fieldset class="roles-fieldset">
+                  <legend>Account status</legend>
+                  <label class="role-option">
+                    <input
+                      type="checkbox"
+                      [checked]="person.isActive"
+                      [disabled]="savingActiveId === person.id || isActiveToggleLocked(person)"
+                      (change)="setActive(person, $any($event.target).checked)"
+                    />
+                    Active
+                  </label>
+                  @if (isActiveToggleLocked(person)) {
+                    <p class="panel-note">
+                      @if (isCurrentUser(person)) {
+                        You cannot deactivate your own account.
+                      } @else {
+                        Each hospital must keep at least one active Admin.
+                      }
+                    </p>
+                  }
+                </fieldset>
+
+                <fieldset class="roles-fieldset">
                   <legend>Edit roles</legend>
+                  <p class="panel-note">You cannot remove Admin if this is the only Admin at your hospital.</p>
                   <div class="role-grid">
                     @for (role of availableRoles; track role) {
                       <label class="role-option">
                         <input
                           type="checkbox"
                           [checked]="hasRole(person.id, role)"
+                          [disabled]="isAdminRoleLocked(person.id, role)"
                           (change)="toggleRole(person.id, role, $any($event.target).checked)"
                         />
                         {{ role }}
@@ -90,8 +152,8 @@
                   </button>
                 </div>
 
-                @if (roleError && isExpanded(person.id)) {
-                  <p class="inline-message error">{{ roleError }}</p>
+                @if ((roleError || activeError) && isExpanded(person.id)) {
+                  <p class="inline-message error">{{ roleError || activeError }}</p>
                 }
               </div>
             </article>
@@ -132,13 +194,6 @@
           Email
           <input [(ngModel)]="newPerson.email" name="email" type="email" autocomplete="email" required />
         </label>
-        <label>
-          Status
-          <select [(ngModel)]="newPerson.status" name="status">
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-        </label>
 
         <fieldset class="roles-fieldset span-full">
           <legend>Roles</legend>
@@ -158,7 +213,7 @@
 
         <div class="form-actions span-full">
           <button type="button" class="secondary" (click)="closeAddUser()">Cancel</button>
-          <button type="submit" [disabled]="creating">
+          <button type="submit" [disabled]="creating || !canCreatePerson">
             {{ creating ? 'Adding…' : 'Add user' }}
           </button>
         </div>
@@ -166,6 +221,99 @@
 
       @if (formError) {
         <p class="inline-message error">{{ formError }}</p>
+      }
+    </div>
+  }
+
+  @if (addProviderOpen) {
+    <div class="dialog-backdrop" (click)="closeAddProvider()"></div>
+    <div
+      class="add-user-dialog provider-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-provider-heading"
+    >
+      <div class="dialog-header">
+        <div>
+          <h2 id="add-provider-heading">Create hospital provider</h2>
+          <p class="panel-note">Requires one hospital Admin account (password: {{ defaultPassword }}).</p>
+        </div>
+        <button type="button" class="dialog-close" (click)="closeAddProvider()" aria-label="Close">
+          Close
+        </button>
+      </div>
+
+      <form class="add-form" (ngSubmit)="createProvider()">
+        <label>
+          Provider code
+          <input [(ngModel)]="newProvider.providerCode" name="providerCode" required />
+        </label>
+        <label>
+          Provider type
+          <select [(ngModel)]="newProvider.providerType" name="providerType">
+            <option value="Hospital">Hospital</option>
+            <option value="Clinic">Clinic</option>
+            <option value="Lab">Lab</option>
+            <option value="Pharmacy">Pharmacy</option>
+          </select>
+        </label>
+        <label class="span-2">
+          Name
+          <input [(ngModel)]="newProvider.name" name="providerName" required />
+        </label>
+        <label class="span-2">
+          Address
+          <input [(ngModel)]="newProvider.address" name="address" required />
+        </label>
+        <label>
+          City
+          <input [(ngModel)]="newProvider.city" name="city" required />
+        </label>
+        <label>
+          State
+          <input [(ngModel)]="newProvider.state" name="state" required />
+        </label>
+        <label>
+          Postal code
+          <input [(ngModel)]="newProvider.postalCode" name="postalCode" required />
+        </label>
+        <label>
+          Phone
+          <input [(ngModel)]="newProvider.phone" name="phone" required />
+        </label>
+        <label class="span-2">
+          Provider email (optional)
+          <input [(ngModel)]="newProvider.email" name="providerEmail" type="email" />
+        </label>
+
+        <fieldset class="roles-fieldset span-full">
+          <legend>Hospital admin (required)</legend>
+          <div class="add-form nested-form">
+            <label>
+              First name
+              <input [(ngModel)]="newProvider.adminFirstName" name="adminFirstName" required />
+            </label>
+            <label>
+              Last name
+              <input [(ngModel)]="newProvider.adminLastName" name="adminLastName" required />
+            </label>
+            <label class="span-2">
+              Email
+              <input [(ngModel)]="newProvider.adminEmail" name="adminEmail" type="email" required />
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="form-actions span-full">
+          <button type="button" class="secondary" (click)="closeAddProvider()">Cancel</button>
+          <button type="submit" [disabled]="creatingProvider || !canCreateProvider">
+            {{ creatingProvider ? 'Creating…' : 'Create provider' }}
+          </button>
+        </div>
+      </form>
+
+      @if (providerFormError) {
+        <p class="inline-message error">{{ providerFormError }}</p>
       }
     </div>
   }

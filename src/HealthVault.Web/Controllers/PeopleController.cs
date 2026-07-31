@@ -7,11 +7,16 @@ public class PeopleController : BaseApiController
 {
     [Route("api/people")]
     [HttpGet]
-    public async Task<IReadOnlyList<PersonModel>> Get(
+    public async Task<ActionResult<IReadOnlyList<PersonModel>>> Get(
         CancellationToken cancellationToken)
     {
-        var query = new GetPeopleQuery();
-        return await Mediator.Send(query, cancellationToken);
+        var email = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await Mediator.Send(new GetPeopleQuery(email), cancellationToken));
     }
 
     [Route("api/people/roles")]
@@ -25,23 +30,63 @@ public class PeopleController : BaseApiController
 
     [Route("api/people")]
     [HttpPost]
-    public async Task<PersonModel> Create(
+    public async Task<ActionResult<PersonModel>> Create(
         [FromBody] CreatePersonCommand command,
         CancellationToken cancellationToken)
     {
-        return await Mediator.Send(command, cancellationToken);
+        var email = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await Mediator.Send(
+            command with { RequestedByEmail = email },
+            cancellationToken));
     }
 
     [Route("api/people/{personId:int}/roles")]
     [HttpPut]
-    public async Task<PersonModel> UpdateRoles(
+    public async Task<ActionResult<PersonModel>> UpdateRoles(
         int personId,
         [FromBody] UpdatePersonRolesCommand command,
         CancellationToken cancellationToken)
     {
-        return await Mediator.Send(
-            command with { PersonId = personId },
-            cancellationToken);
+        var email = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await Mediator.Send(
+            command with
+            {
+                PersonId = personId,
+                RequestedByEmail = email
+            },
+            cancellationToken));
+    }
+
+    [Route("api/people/{personId:int}/active")]
+    [HttpPut]
+    public async Task<ActionResult<PersonModel>> UpdateActive(
+        int personId,
+        [FromBody] UpdatePersonActiveCommand command,
+        CancellationToken cancellationToken)
+    {
+        var email = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await Mediator.Send(
+            command with
+            {
+                PersonId = personId,
+                RequestedByEmail = email
+            },
+            cancellationToken));
     }
 
     [Route("api/people/{personId:int}/password")]

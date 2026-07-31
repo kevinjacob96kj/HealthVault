@@ -30,7 +30,7 @@ export const authGuard: CanActivateFn = () => {
   return true;
 };
 
-/** Requires a signed-in user with the Admin role. */
+/** Requires a signed-in hospital Admin or Central Admin. */
 export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -43,7 +43,47 @@ export const adminGuard: CanActivateFn = () => {
     return router.createUrlTree(['/change-password']);
   }
 
-  if (auth.isAdmin) {
+  if (auth.canAccessAdmin) {
+    return true;
+  }
+
+  return router.createUrlTree(['/']);
+};
+
+/** Requires a signed-in Patient. */
+export const patientGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (!auth.isLoggedIn) {
+    return router.createUrlTree(['/login']);
+  }
+
+  if (auth.mustChangePassword) {
+    return router.createUrlTree(['/change-password']);
+  }
+
+  if (auth.isPatient) {
+    return true;
+  }
+
+  return router.createUrlTree(['/']);
+};
+
+/** Requires a signed-in Doctor. */
+export const doctorGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (!auth.isLoggedIn) {
+    return router.createUrlTree(['/login']);
+  }
+
+  if (auth.mustChangePassword) {
+    return router.createUrlTree(['/change-password']);
+  }
+
+  if (auth.isDoctor) {
     return true;
   }
 

@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 namespace HealthVault.Application.People;
 
 /// <summary>
-/// Query that gets all people and their roles.
+/// Query that gets people for the signed-in admin's hospital only.
 /// </summary>
-public record GetPeopleQuery : IRequest<IReadOnlyList<PersonModel>>;
+public record GetPeopleQuery(string RequestedByEmail) : IRequest<IReadOnlyList<PersonModel>>;
 
 /// <summary>
 /// Handles a <see cref="GetPeopleQuery"/>.
@@ -25,16 +25,22 @@ public class GetPeopleHandler : IRequestHandler<GetPeopleQuery, IReadOnlyList<Pe
         GetPeopleQuery request,
         CancellationToken cancellationToken)
     {
-        return await _context.People
+        var providerId = await HospitalStaffScope.GetRequiredProviderIdAsync(
+            _context,
+            request.RequestedByEmail,
+            cancellationToken);
+
+        return await _context.HealthcareStaff
             .AsNoTracking()
-            .OrderBy(person => person.Id)
-            .Select(person => new PersonModel(
-                person.Id,
-                person.FirstName,
-                person.LastName,
-                person.Email,
-                person.Status,
-                person.Claims
+            .Where(staff => staff.HealthcareProviderId == providerId)
+            .OrderBy(staff => staff.PersonId)
+            .Select(staff => new PersonModel(
+                staff.Person.Id,
+                staff.Person.FirstName,
+                staff.Person.LastName,
+                staff.Person.Email,
+                staff.IsActive,
+                staff.Person.Claims
                     .Select(claim => claim.Role)
                     .OrderBy(role => role)
                     .ToList()))

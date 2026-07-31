@@ -2,7 +2,19 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
-import { LoginRequest, LoginUser } from './auth.model';
+import {
+  GoogleAuthConfig,
+  LoginRequest,
+  LoginUser,
+  PatientGoogleSignupRequest,
+  PatientLoginRequest,
+  PatientOtpRequest,
+  PatientOtpSent,
+  PatientSignupCompleteRequest,
+  PatientSignupVerified,
+  PatientSignupVerifyRequest,
+  StaffLoginRequest
+} from './auth.model';
 import { Person } from '../users/person.model';
 
 const STORAGE_KEY = 'healthvault.user';
@@ -31,6 +43,28 @@ export class AuthService {
     );
   }
 
+  get isCentralAdmin(): boolean {
+    return (this.currentUser?.roles ?? []).some(
+      (role) => role.toLowerCase() === 'centraladmin'
+    );
+  }
+
+  get canAccessAdmin(): boolean {
+    return this.isAdmin || this.isCentralAdmin;
+  }
+
+  get isPatient(): boolean {
+    return (this.currentUser?.roles ?? []).some(
+      (role) => role.toLowerCase() === 'patient'
+    );
+  }
+
+  get isDoctor(): boolean {
+    return (this.currentUser?.roles ?? []).some(
+      (role) => role.toLowerCase() === 'doctor'
+    );
+  }
+
   get displayName(): string {
     if (!this.currentUser) {
       return '';
@@ -39,11 +73,43 @@ export class AuthService {
     return `${this.currentUser.firstName} ${this.currentUser.lastName}`;
   }
 
-  login(request: LoginRequest): Observable<LoginUser> {
+  login(request: StaffLoginRequest | LoginRequest): Observable<LoginUser> {
     return this.http.post<LoginUser>('/api/auth/login', request).pipe(
       tap((user) => {
         this.setCurrentUser(user);
       })
+    );
+  }
+
+  sendPatientOtp(request: PatientOtpRequest): Observable<PatientOtpSent> {
+    return this.http.post<PatientOtpSent>('/api/auth/login/patient/otp', request);
+  }
+
+  loginAsPatient(request: PatientLoginRequest): Observable<LoginUser> {
+    return this.http.post<LoginUser>('/api/auth/login/patient', request).pipe(
+      tap((user) => {
+        this.setCurrentUser(user);
+      })
+    );
+  }
+
+  getGoogleConfig(): Observable<GoogleAuthConfig> {
+    return this.http.get<GoogleAuthConfig>('/api/auth/google-config');
+  }
+
+  verifyPatientSignup(request: PatientSignupVerifyRequest): Observable<PatientSignupVerified> {
+    return this.http.post<PatientSignupVerified>('/api/auth/signup/patient/verify', request);
+  }
+
+  completePatientSignup(request: PatientSignupCompleteRequest): Observable<LoginUser> {
+    return this.http.post<LoginUser>('/api/auth/signup/patient', request).pipe(
+      tap((user) => this.setCurrentUser(user))
+    );
+  }
+
+  completePatientSignupWithGoogle(request: PatientGoogleSignupRequest): Observable<LoginUser> {
+    return this.http.post<LoginUser>('/api/auth/signup/patient/google', request).pipe(
+      tap((user) => this.setCurrentUser(user))
     );
   }
 

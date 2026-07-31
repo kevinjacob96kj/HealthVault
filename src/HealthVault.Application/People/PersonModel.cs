@@ -8,13 +8,14 @@ public record PersonModel(
     string FirstName,
     string LastName,
     string Email,
-    string Status,
+    bool IsActive,
     IReadOnlyList<string> Roles);
 
 internal static class PeopleRoles
 {
     public const string DefaultPassword = "Password@1";
     public const string Admin = "Admin";
+    public const string CentralAdmin = "CentralAdmin";
     public const string PasswordComplexityMessage =
         "Password must include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.";
 
@@ -25,9 +26,21 @@ internal static class PeopleRoles
     public static readonly IReadOnlyList<string> Allowed =
     [
         "Admin",
+        "CentralAdmin",
         "Doctor",
         "Nurse",
         "Patient",
+        "Staff"
+    ];
+
+    /// <summary>
+    /// Roles a hospital admin may assign to staff at their provider.
+    /// </summary>
+    public static readonly IReadOnlyList<string> HospitalAssignable =
+    [
+        "Admin",
+        "Doctor",
+        "Nurse",
         "Staff"
     ];
 
@@ -55,12 +68,36 @@ internal static class PeopleRoles
             Allowed.Contains(role, StringComparer.OrdinalIgnoreCase));
     }
 
+    public static bool AreHospitalAssignable(IEnumerable<string>? roles)
+    {
+        return (roles ?? []).All(role =>
+            HospitalAssignable.Contains(role, StringComparer.OrdinalIgnoreCase));
+    }
+
     public static List<string> Normalize(IEnumerable<string>? roles)
+    {
+        return NormalizeAgainst(roles, Allowed);
+    }
+
+    public static List<string> NormalizeHospitalAssignable(IEnumerable<string>? roles)
+    {
+        return NormalizeAgainst(roles, HospitalAssignable);
+    }
+
+    public static bool HasAdmin(IEnumerable<string>? roles)
+    {
+        return (roles ?? []).Any(role =>
+            role.Equals(Admin, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static List<string> NormalizeAgainst(
+        IEnumerable<string>? roles,
+        IReadOnlyList<string> allowed)
     {
         return (roles ?? [])
             .Where(role => !string.IsNullOrWhiteSpace(role))
-            .Select(role => Allowed.First(allowed =>
-                allowed.Equals(role.Trim(), StringComparison.OrdinalIgnoreCase)))
+            .Select(role => allowed.First(item =>
+                item.Equals(role.Trim(), StringComparison.OrdinalIgnoreCase)))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }

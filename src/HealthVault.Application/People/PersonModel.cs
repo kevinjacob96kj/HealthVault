@@ -11,7 +11,7 @@ public record PersonModel(
     bool IsActive,
     IReadOnlyList<string> Roles);
 
-internal static class PeopleRoles
+public static class PeopleRoles
 {
     public const string DefaultPassword = "Password@1";
     public const string Admin = "Admin";

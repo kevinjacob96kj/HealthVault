@@ -15,7 +15,8 @@ public record PatientModel(
     DateOnly DateOfBirth,
     string Gender,
     string Email,
-    string MobileNumber);
+    string MobileNumber,
+    bool IsActive);
 
 /// <summary>
 /// Query that gets all patients for admin views.
@@ -50,7 +51,8 @@ public class GetPatientsHandler : IRequestHandler<GetPatientsQuery, IReadOnlyLis
                 patient.DateOfBirth,
                 patient.Person.Gender,
                 patient.Person.Email,
-                patient.MobileNumber))
+                patient.MobileNumber,
+                patient.IsActive))
             .ToListAsync(cancellationToken);
     }
 }

@@ -1,17 +1,19 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { FindDoctorService } from '../find-doctor/find-doctor.service';
 import { DoctorPatient } from '../find-doctor/find-doctor.model';
 
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './patients.component.html',
   styleUrl: './patients.component.css'
 })
 export class PatientsComponent implements OnInit {
   private readonly service = inject(FindDoctorService);
+  private readonly router = inject(Router);
 
   patients: DoctorPatient[] = [];
   loading = true;
@@ -28,6 +30,10 @@ export class PatientsComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  openCase(patient: DoctorPatient): void {
+    void this.router.navigate(['/patients', patient.id]);
   }
 
   formatDate(value: string): string {

@@ -28,6 +28,25 @@ public class AuthController : BaseApiController
         return await Mediator.Send(command, cancellationToken);
     }
 
+    [Route("api/auth/me")]
+    [HttpGet]
+    public async Task<ActionResult<LoginUserModel>> Me(CancellationToken cancellationToken)
+    {
+        var email = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Unauthorized();
+        }
+
+        var session = await Mediator.Send(new GetCurrentSessionQuery(email), cancellationToken);
+        if (session is null)
+        {
+            return Unauthorized();
+        }
+
+        return session;
+    }
+
     [Route("api/auth/login/patient/otp")]
     [HttpPost]
     [AllowAnonymous]

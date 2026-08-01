@@ -35,7 +35,24 @@ builder.Services
     .AddScheme<AuthenticationSchemeOptions, HealthVaultUserAuthenticationHandler>(
         HealthVaultAuthDefaults.Scheme,
         _ => { });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        HealthVaultPolicies.MustBeAnAdmin,
+        policy => policy.RequireRole(PeopleRoles.Admin, PeopleRoles.CentralAdmin));
+
+    options.AddPolicy(
+        HealthVaultPolicies.MustBeACentralAdmin,
+        policy => policy.RequireRole(PeopleRoles.CentralAdmin));
+
+    options.AddPolicy(
+        HealthVaultPolicies.MustBeADoctor,
+        policy => policy.RequireRole("Doctor"));
+
+    options.AddPolicy(
+        HealthVaultPolicies.MustBeAPatient,
+        policy => policy.RequireRole("Patient"));
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowOrigin", policy =>

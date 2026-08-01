@@ -41,4 +41,8 @@ export class FindDoctorService {
   getMyPatients(): Observable<DoctorPatient[]> {
     return this.http.get<DoctorPatient[]>('/api/doctors/me/patients');
   }
+
+  getMyPatientCase(patientId: number): Observable<DoctorPatient> {
+    return this.http.get<DoctorPatient>(`/api/doctors/me/patients/${patientId}`);
+  }
 }

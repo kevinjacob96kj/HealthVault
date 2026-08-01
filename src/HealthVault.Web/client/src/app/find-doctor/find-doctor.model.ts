@@ -40,6 +40,7 @@ export interface DoctorPatient {
   gender: string;
   email: string;
   mobileNumber: string;
+  isActive: boolean;
   assignedAt: string;
   notes: string | null;
 }

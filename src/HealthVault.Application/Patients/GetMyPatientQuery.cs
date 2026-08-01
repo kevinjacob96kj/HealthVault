@@ -42,7 +42,8 @@ public class GetMyPatientHandler : IRequestHandler<GetMyPatientQuery, PatientMod
                 patient.DateOfBirth,
                 patient.Person.Gender,
                 patient.Person.Email,
-                patient.MobileNumber))
+                patient.MobileNumber,
+                patient.IsActive))
             .SingleOrDefaultAsync(cancellationToken);
     }
 }

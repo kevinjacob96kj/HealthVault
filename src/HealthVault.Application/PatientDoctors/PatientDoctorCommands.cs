@@ -340,6 +340,7 @@ public record DoctorPatientModel(
     string Gender,
     string Email,
     string MobileNumber,
+    bool IsActive,
     DateTime AssignedAt,
     string? Notes);
 
@@ -386,8 +387,66 @@ public class GetMyPatientsHandler
                 assignment.Patient.Person.Gender,
                 assignment.Patient.Person.Email,
                 assignment.Patient.MobileNumber,
+                assignment.Patient.IsActive,
                 assignment.AssignedAt,
                 assignment.Notes))
             .ToListAsync(cancellationToken);
+    }
+}
+
+public record GetDoctorPatientCaseQuery(string DoctorEmail, int PatientId)
+    : IRequest<DoctorPatientModel>;
+
+public class GetDoctorPatientCaseHandler
+    : IRequestHandler<GetDoctorPatientCaseQuery, DoctorPatientModel>
+{
+    private readonly AppDbContext _context;
+
+    public GetDoctorPatientCaseHandler(AppDbContext context) => _context = context;
+
+    public async Task<DoctorPatientModel> Handle(
+        GetDoctorPatientCaseQuery request,
+        CancellationToken cancellationToken)
+    {
+        var staffId = await _context.HealthcareStaff
+            .AsNoTracking()
+            .Where(staff =>
+                staff.Person.Email == request.DoctorEmail.Trim() &&
+                staff.IsActive &&
+                staff.Person.Claims.Any(claim => claim.Role == "Doctor"))
+            .Select(staff => (int?)staff.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (staffId is null)
+        {
+            throw new UnauthorizedAccessException("Your account is not linked to an active doctor profile.");
+        }
+
+        var patient = await _context.PatientDoctorAssignments
+            .AsNoTracking()
+            .Where(assignment =>
+                assignment.HealthcareStaffId == staffId.Value &&
+                assignment.PatientId == request.PatientId &&
+                assignment.IsActive)
+            .Select(assignment => new DoctorPatientModel(
+                assignment.Patient.Id,
+                assignment.Patient.AbhaId,
+                assignment.Patient.Person.FirstName,
+                assignment.Patient.Person.LastName,
+                assignment.Patient.DateOfBirth,
+                assignment.Patient.Person.Gender,
+                assignment.Patient.Person.Email,
+                assignment.Patient.MobileNumber,
+                assignment.Patient.IsActive,
+                assignment.AssignedAt,
+                assignment.Notes))
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (patient is null)
+        {
+            throw new KeyNotFoundException("Patient case was not found for your assignments.");
+        }
+
+        return patient;
     }
 }

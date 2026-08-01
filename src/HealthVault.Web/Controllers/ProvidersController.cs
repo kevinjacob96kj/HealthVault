@@ -1,4 +1,6 @@
 using HealthVault.Application.PatientDoctors;
+using HealthVault.Web.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthVault.Web.Controllers;
@@ -7,6 +9,7 @@ public class ProvidersController : BaseApiController
 {
     [Route("api/providers")]
     [HttpGet]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAPatient)]
     public async Task<IReadOnlyList<ProviderSearchModel>> Search(
         [FromQuery] string? q,
         CancellationToken cancellationToken)
@@ -16,6 +19,7 @@ public class ProvidersController : BaseApiController
 
     [Route("api/providers/{providerId:int}/doctors")]
     [HttpGet]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAPatient)]
     public async Task<ActionResult<IReadOnlyList<DoctorSearchModel>>> GetDoctors(
         int providerId,
         CancellationToken cancellationToken)

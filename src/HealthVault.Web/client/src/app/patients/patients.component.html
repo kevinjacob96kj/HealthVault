@@ -1,7 +1,7 @@
 <section class="patients-page">
   <header class="page-header">
     <h1>Patients</h1>
-    <p>Patients who have assigned you as their doctor.</p>
+    <p>Patients who have assigned you as their doctor. Click a row to open the case.</p>
   </header>
 
   @if (loading) {
@@ -27,9 +27,21 @@
         </thead>
         <tbody>
           @for (patient of patients; track patient.id) {
-            <tr>
+            <tr
+              class="clickable-row"
+              tabindex="0"
+              role="link"
+              [attr.aria-label]="'Open case for ' + patient.firstName + ' ' + patient.lastName"
+              (click)="openCase(patient)"
+              (keydown.enter)="openCase(patient)"
+              (keydown.space)="$event.preventDefault(); openCase(patient)"
+            >
               <td>{{ patient.abhaId }}</td>
-              <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+              <td>
+                <a [routerLink]="['/patients', patient.id]" (click)="$event.stopPropagation()">
+                  {{ patient.firstName }} {{ patient.lastName }}
+                </a>
+              </td>
               <td>{{ formatDate(patient.dateOfBirth) }}</td>
               <td>{{ patient.gender }}</td>
               <td>{{ patient.email }}</td>

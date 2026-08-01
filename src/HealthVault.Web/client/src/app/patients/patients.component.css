@@ -70,3 +70,22 @@ tbody tr:last-child td {
 tbody tr:hover {
   background: #f7fbfa;
 }
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:focus-visible {
+  outline: 2px solid #167d71;
+  outline-offset: -2px;
+}
+
+.clickable-row a {
+  color: #11685f;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.clickable-row a:hover {
+  text-decoration: underline;
+}

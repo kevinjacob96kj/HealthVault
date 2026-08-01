@@ -1,44 +1,62 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { map } from 'rxjs';
 import { AuthService } from './auth.service';
+
+function requireSession(
+  decide: (auth: AuthService, router: Router) => boolean | UrlTree
+): CanActivateFn {
+  return () => {
+    const auth = inject(AuthService);
+    const router = inject(Router);
+
+    if (!auth.isLoggedIn) {
+      return router.createUrlTree(['/login']);
+    }
+
+    return auth.refreshSession().pipe(
+      map((user) => {
+        if (!user) {
+          return router.createUrlTree(['/login']);
+        }
+
+        return decide(auth, router);
+      })
+    );
+  };
+}
 
 /** Redirects signed-in users who still must change their password. */
 export const passwordChangeRedirectGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (auth.isLoggedIn && auth.mustChangePassword) {
-    return router.createUrlTree(['/change-password']);
+  if (!auth.isLoggedIn) {
+    return true;
   }
 
-  return true;
+  return auth.refreshSession().pipe(
+    map((user) => {
+      if (user?.mustChangePassword) {
+        return router.createUrlTree(['/change-password']);
+      }
+
+      return true;
+    })
+  );
 };
 
 /** Requires any signed-in user who has already set their password. */
-export const authGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-
-  if (!auth.isLoggedIn) {
-    return router.createUrlTree(['/login']);
-  }
-
+export const authGuard: CanActivateFn = requireSession((auth, router) => {
   if (auth.mustChangePassword) {
     return router.createUrlTree(['/change-password']);
   }
 
   return true;
-};
+});
 
 /** Requires a signed-in hospital Admin or Central Admin. */
-export const adminGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-
-  if (!auth.isLoggedIn) {
-    return router.createUrlTree(['/login']);
-  }
-
+export const adminGuard: CanActivateFn = requireSession((auth, router) => {
   if (auth.mustChangePassword) {
     return router.createUrlTree(['/change-password']);
   }
@@ -48,17 +66,10 @@ export const adminGuard: CanActivateFn = () => {
   }
 
   return router.createUrlTree(['/']);
-};
+});
 
 /** Requires a signed-in Patient. */
-export const patientGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-
-  if (!auth.isLoggedIn) {
-    return router.createUrlTree(['/login']);
-  }
-
+export const patientGuard: CanActivateFn = requireSession((auth, router) => {
   if (auth.mustChangePassword) {
     return router.createUrlTree(['/change-password']);
   }
@@ -68,17 +79,10 @@ export const patientGuard: CanActivateFn = () => {
   }
 
   return router.createUrlTree(['/']);
-};
+});
 
 /** Requires a signed-in Doctor. */
-export const doctorGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-
-  if (!auth.isLoggedIn) {
-    return router.createUrlTree(['/login']);
-  }
-
+export const doctorGuard: CanActivateFn = requireSession((auth, router) => {
   if (auth.mustChangePassword) {
     return router.createUrlTree(['/change-password']);
   }
@@ -88,20 +92,13 @@ export const doctorGuard: CanActivateFn = () => {
   }
 
   return router.createUrlTree(['/']);
-};
+});
 
 /** Requires a signed-in user who still must change their password. */
-export const mustChangePasswordGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-
-  if (!auth.isLoggedIn) {
-    return router.createUrlTree(['/login']);
-  }
-
+export const mustChangePasswordGuard: CanActivateFn = requireSession((auth, router) => {
   if (!auth.mustChangePassword) {
     return router.createUrlTree(['/']);
   }
 
   return true;
-};
+});

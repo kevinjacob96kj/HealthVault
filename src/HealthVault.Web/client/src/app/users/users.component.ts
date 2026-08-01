@@ -286,6 +286,10 @@ export class UsersComponent implements OnInit {
         this.people = this.people.map((p) => (p.id === updated.id ? updated : p));
         this.draftRoles[updated.id] = [...updated.roles];
         this.savingId = null;
+
+        if (this.auth.user?.id === updated.id) {
+          this.auth.applySessionRoles(updated.roles);
+        }
       },
       error: (err) => {
         this.roleError =

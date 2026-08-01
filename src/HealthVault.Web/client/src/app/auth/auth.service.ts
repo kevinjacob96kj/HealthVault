@@ -1,7 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import {
   GoogleAuthConfig,
   LoginRequest,
@@ -16,6 +16,7 @@ import {
   StaffLoginRequest
 } from './auth.model';
 import { Person } from '../users/person.model';
+import { InactivityService } from './inactivity.service';
 
 const STORAGE_KEY = 'healthvault.user';
 
@@ -23,10 +24,17 @@ const STORAGE_KEY = 'healthvault.user';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private currentUser: LoginUser | null = this.readStoredUser();
+  private readonly injector = inject(Injector);
+  private readonly userSubject = new BehaviorSubject<LoginUser | null>(this.readStoredUser());
+
+  readonly user$ = this.userSubject.asObservable();
 
   get user(): LoginUser | null {
-    return this.currentUser;
+    return this.userSubject.value;
+  }
+
+  private get currentUser(): LoginUser | null {
+    return this.userSubject.value;
   }
 
   get isLoggedIn(): boolean {
@@ -71,6 +79,34 @@ export class AuthService {
     }
 
     return `${this.currentUser.firstName} ${this.currentUser.lastName}`;
+  }
+
+  /** Reloads roles and profile fields from the server into the local session. */
+  refreshSession(): Observable<LoginUser | null> {
+    if (!this.currentUser?.email) {
+      return of(null);
+    }
+
+    return this.http.get<LoginUser>('/api/auth/me').pipe(
+      tap((user) => this.setCurrentUser(user)),
+      catchError(() => {
+        this.logout();
+        return of(null);
+      })
+    );
+  }
+
+  /** Updates the signed-in user's roles in the local session immediately. */
+  applySessionRoles(roles: string[]): void {
+    const user = this.currentUser;
+    if (!user) {
+      return;
+    }
+
+    this.setCurrentUser({
+      ...user,
+      roles: [...roles]
+    });
   }
 
   login(request: StaffLoginRequest | LoginRequest): Observable<LoginUser> {
@@ -165,17 +201,20 @@ export class AuthService {
   }
 
   logout(): void {
-    this.currentUser = null;
+    this.injector.get(InactivityService).stop();
+    this.userSubject.next(null);
     localStorage.removeItem(STORAGE_KEY);
     void this.router.navigate(['/login']);
   }
 
   private setCurrentUser(user: LoginUser): void {
-    this.currentUser = {
+    const nextUser = {
       ...user,
       mustChangePassword: user.mustChangePassword === true
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.currentUser));
+    this.userSubject.next(nextUser);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
+    this.injector.get(InactivityService).start();
   }
 
   private readStoredUser(): LoginUser | null {

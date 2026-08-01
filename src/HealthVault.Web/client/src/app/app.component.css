@@ -136,6 +136,51 @@
   color: #11685f;
 }
 
+.inactivity-banner {
+  position: sticky;
+  top: 4.25rem;
+  z-index: 20;
+  padding: 0.85rem 1rem;
+  background: #fff7e8;
+  border-bottom: 1px solid #f0d9a8;
+  color: #5c4314;
+}
+
+.inactivity-banner-content {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.inactivity-banner h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.inactivity-banner p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.inactivity-banner button {
+  flex-shrink: 0;
+  padding: 0.55rem 0.9rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: #167d71;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inactivity-banner button:hover {
+  background: #11685f;
+}
+
 @media (max-width: 30rem) {
   .navbar {
     padding: 0 1rem;
@@ -143,5 +188,10 @@
 
   .nav-links a {
     padding-inline: 0.6rem;
+  }
+
+  .inactivity-banner-content {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

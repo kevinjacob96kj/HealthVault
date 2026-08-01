@@ -1,5 +1,7 @@
 using HealthVault.Application.PatientDoctors;
 using HealthVault.Application.Patients;
+using HealthVault.Web.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthVault.Web.Controllers;
@@ -8,6 +10,7 @@ public class PatientsController : BaseApiController
 {
     [Route("api/patients")]
     [HttpGet]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAnAdmin)]
     public async Task<IReadOnlyList<PatientModel>> Get(
         CancellationToken cancellationToken)
     {
@@ -16,6 +19,7 @@ public class PatientsController : BaseApiController
 
     [Route("api/patients/me")]
     [HttpGet]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAPatient)]
     public async Task<ActionResult<PatientModel>> GetMine(
         CancellationToken cancellationToken)
     {
@@ -36,6 +40,7 @@ public class PatientsController : BaseApiController
 
     [Route("api/patients/me/doctors")]
     [HttpGet]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAPatient)]
     public async Task<ActionResult<IReadOnlyList<AssignedDoctorModel>>> GetMyDoctors(
         CancellationToken cancellationToken)
     {
@@ -50,6 +55,7 @@ public class PatientsController : BaseApiController
 
     [Route("api/patients/me/doctors")]
     [HttpPost]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAPatient)]
     public async Task<ActionResult<AssignedDoctorModel>> AssignDoctor(
         [FromBody] AssignDoctorCommand command,
         CancellationToken cancellationToken)
@@ -67,6 +73,7 @@ public class PatientsController : BaseApiController
 
     [Route("api/patients/me/doctors/{healthcareStaffId:int}")]
     [HttpDelete]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAPatient)]
     public async Task<ActionResult> UnassignDoctor(
         int healthcareStaffId,
         CancellationToken cancellationToken)

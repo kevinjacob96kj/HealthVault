@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthVault.Web.Controllers;
@@ -7,6 +8,7 @@ namespace HealthVault.Web.Controllers;
 /// Base controller that exposes MediatR to API controllers.
 /// </summary>
 [ApiController]
+[Authorize]
 public abstract class BaseApiController : ControllerBase
 {
     private IMediator? _mediator;

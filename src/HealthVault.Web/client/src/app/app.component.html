@@ -1,31 +1,31 @@
-<header class="site-header">
-  <nav class="navbar" aria-label="Main navigation">
-    <a class="brand" routerLink="/" aria-label="HealthVault home">
-      <span class="brand-mark" aria-hidden="true">+</span>
-      <span>HealthVault</span>
-    </a>
+@if (auth.user$ | async; as user) {
+  <header class="site-header">
+    <nav class="navbar" aria-label="Main navigation">
+      <a class="brand" routerLink="/" aria-label="HealthVault home">
+        <span class="brand-mark" aria-hidden="true">+</span>
+        <span>HealthVault</span>
+      </a>
 
-    <div class="nav-links">
-      @if (auth.isLoggedIn && !auth.mustChangePassword) {
-        <a
-          routerLink="/"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-        >
-          Home
-        </a>
-      }
-      @if (auth.canAccessAdmin && !auth.mustChangePassword) {
-        <a routerLink="/admin" routerLinkActive="active">Admin</a>
-      }
-      @if (auth.isPatient && !auth.mustChangePassword) {
-        <a routerLink="/find-doctor" routerLinkActive="active">Find a Doctor</a>
-      }
-      @if (auth.isDoctor && !auth.mustChangePassword) {
-        <a routerLink="/patients" routerLinkActive="active">Patients</a>
-      }
+      <div class="nav-links">
+        @if (auth.isLoggedIn && !auth.mustChangePassword) {
+          <a
+            routerLink="/"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+          >
+            Home
+          </a>
+        }
+        @if (auth.canAccessAdmin && !auth.mustChangePassword) {
+          <a routerLink="/admin" routerLinkActive="active">Admin</a>
+        }
+        @if (auth.isPatient && !auth.mustChangePassword) {
+          <a routerLink="/find-doctor" routerLinkActive="active">Find a Doctor</a>
+        }
+        @if (auth.isDoctor && !auth.mustChangePassword) {
+          <a routerLink="/patients" routerLinkActive="active">Patients</a>
+        }
 
-      @if (auth.isLoggedIn) {
         <div class="user-menu">
           <button type="button" class="user-chip" aria-haspopup="true">
             {{ auth.displayName }}
@@ -39,12 +39,40 @@
             </button>
           </div>
         </div>
-      } @else {
+      </div>
+    </nav>
+  </header>
+} @else {
+  <header class="site-header">
+    <nav class="navbar" aria-label="Main navigation">
+      <a class="brand" routerLink="/" aria-label="HealthVault home">
+        <span class="brand-mark" aria-hidden="true">+</span>
+        <span>HealthVault</span>
+      </a>
+
+      <div class="nav-links">
         <a routerLink="/login" routerLinkActive="active">Sign in</a>
-      }
+      </div>
+    </nav>
+  </header>
+}
+
+@if (inactivity.warningVisible$ | async) {
+  <div
+    class="inactivity-banner"
+    role="alertdialog"
+    aria-live="assertive"
+    aria-labelledby="inactivity-heading"
+  >
+    <div class="inactivity-banner-content">
+      <div>
+        <h2 id="inactivity-heading">Still there?</h2>
+        <p>You will be signed out in 1 minute due to inactivity.</p>
+      </div>
+      <button type="button" (click)="inactivity.staySignedIn()">Stay signed in</button>
     </div>
-  </nav>
-</header>
+  </div>
+}
 
 <main>
   <router-outlet />

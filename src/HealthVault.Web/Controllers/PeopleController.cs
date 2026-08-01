@@ -1,4 +1,6 @@
 using HealthVault.Application.People;
+using HealthVault.Web.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthVault.Web.Controllers;
@@ -7,6 +9,7 @@ public class PeopleController : BaseApiController
 {
     [Route("api/people")]
     [HttpGet]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAnAdmin)]
     public async Task<ActionResult<IReadOnlyList<PersonModel>>> Get(
         CancellationToken cancellationToken)
     {
@@ -21,6 +24,7 @@ public class PeopleController : BaseApiController
 
     [Route("api/people/roles")]
     [HttpGet]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAnAdmin)]
     public async Task<IReadOnlyList<string>> GetRoles(
         CancellationToken cancellationToken)
     {
@@ -30,6 +34,7 @@ public class PeopleController : BaseApiController
 
     [Route("api/people")]
     [HttpPost]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAnAdmin)]
     public async Task<ActionResult<PersonModel>> Create(
         [FromBody] CreatePersonCommand command,
         CancellationToken cancellationToken)
@@ -47,6 +52,7 @@ public class PeopleController : BaseApiController
 
     [Route("api/people/{personId:int}/roles")]
     [HttpPut]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAnAdmin)]
     public async Task<ActionResult<PersonModel>> UpdateRoles(
         int personId,
         [FromBody] UpdatePersonRolesCommand command,
@@ -69,6 +75,7 @@ public class PeopleController : BaseApiController
 
     [Route("api/people/{personId:int}/active")]
     [HttpPut]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAnAdmin)]
     public async Task<ActionResult<PersonModel>> UpdateActive(
         int personId,
         [FromBody] UpdatePersonActiveCommand command,

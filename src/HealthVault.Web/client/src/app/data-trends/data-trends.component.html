@@ -1,0 +1,165 @@
+<section class="data-trends-page">
+  <header class="page-header">
+    <h1>Data &amp; Trends</h1>
+    <p>Your case details and health observations over time.</p>
+  </header>
+
+  <app-case-details [embedded]="true" />
+
+  <section class="panel trends-panel" aria-labelledby="trends-heading">
+    <h2 id="trends-heading">Health trends</h2>
+
+    @if (loading) {
+      <p class="status">Loading observations…</p>
+    } @else if (error) {
+      <p class="status error">{{ error }}</p>
+    } @else if (trends.length === 0) {
+      <p class="status">No observation trends are available yet.</p>
+    } @else {
+      <div class="trend-grid">
+        @for (trend of trends; track trend.loincNum) {
+          <article class="trend-card">
+            <header>
+              <h3>{{ trend.shortName }}</h3>
+              <p>{{ trend.longCommonName }} · LOINC {{ trend.loincNum }}</p>
+            </header>
+
+            @if (trend.points.length >= 2) {
+              <svg
+                class="trend-chart"
+                [attr.viewBox]="'0 0 ' + chart.width + ' ' + chart.height"
+                role="img"
+                [attr.aria-label]="trend.shortName + ' trend'"
+              >
+                <!-- Plot background -->
+                <rect
+                  [attr.x]="plotLeft"
+                  [attr.y]="plotTop"
+                  [attr.width]="plotWidth"
+                  [attr.height]="plotHeight"
+                  class="chart-plot"
+                />
+
+                <!-- Horizontal grid + Y-axis labels -->
+                @for (tick of trend.yTicks; track tick.label) {
+                  <line
+                    [attr.x1]="plotLeft"
+                    [attr.x2]="plotRight"
+                    [attr.y1]="tick.y"
+                    [attr.y2]="tick.y"
+                    class="chart-grid"
+                  />
+                  <text
+                    [attr.x]="plotLeft - 8"
+                    [attr.y]="tick.y"
+                    class="chart-label chart-label-y"
+                    text-anchor="end"
+                    dominant-baseline="middle"
+                  >
+                    {{ tick.label }}
+                  </text>
+                }
+
+                <!-- Axes -->
+                <line
+                  [attr.x1]="plotLeft"
+                  [attr.y1]="plotTop"
+                  [attr.x2]="plotLeft"
+                  [attr.y2]="plotBottom"
+                  class="chart-axis"
+                />
+                <line
+                  [attr.x1]="plotLeft"
+                  [attr.y1]="plotBottom"
+                  [attr.x2]="plotRight"
+                  [attr.y2]="plotBottom"
+                  class="chart-axis"
+                />
+
+                <!-- Y-axis title (units) -->
+                @if (trend.units) {
+                  <text
+                    [attr.x]="14"
+                    [attr.y]="plotTop + plotHeight / 2"
+                    class="chart-axis-title"
+                    text-anchor="middle"
+                    [attr.transform]="'rotate(-90 14 ' + (plotTop + plotHeight / 2) + ')'"
+                  >
+                    {{ trend.units }}
+                  </text>
+                }
+
+                <!-- Line + points -->
+                <polyline
+                  [attr.points]="trend.polylinePoints"
+                  fill="none"
+                  stroke="#167d71"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                @for (point of trend.points; track point.label) {
+                  <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4" fill="#11685f" />
+                  <text
+                    [attr.x]="point.x"
+                    [attr.y]="plotBottom + 18"
+                    class="chart-label chart-label-x"
+                    text-anchor="middle"
+                  >
+                    {{ point.shortLabel }}
+                  </text>
+                }
+              </svg>
+            }
+
+            <p class="trend-range">
+              Latest: <strong>{{ trend.latest }}</strong>
+              @if (trend.points.length > 1) {
+                <span>
+                  Range {{ trend.min }}–{{ trend.max }}{{ trend.units ? ' ' + trend.units : '' }}
+                </span>
+              }
+            </p>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="panel" aria-labelledby="observations-heading">
+    <h2 id="observations-heading">Observation history</h2>
+
+    @if (loading) {
+      <p class="status">Loading observations…</p>
+    } @else if (error) {
+      <p class="status error">{{ error }}</p>
+    } @else if (observations.length === 0) {
+      <p class="status">No observations recorded yet.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Test</th>
+              <th scope="col">LOINC</th>
+              <th scope="col">Value</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of observations; track row.id) {
+              <tr>
+                <td>{{ formatDate(row.observedAt) }}</td>
+                <td>{{ row.shortName }}</td>
+                <td>{{ row.loincNum }}</td>
+                <td>{{ row.value }}{{ row.units ? ' ' + row.units : '' }}</td>
+                <td>{{ row.notes || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>

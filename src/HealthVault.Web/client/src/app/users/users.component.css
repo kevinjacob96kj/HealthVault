@@ -1,0 +1,405 @@
+.users-page {
+  min-height: calc(100vh - 4.25rem);
+  padding: 2rem clamp(1rem, 4vw, 2.5rem) 3rem;
+  background:
+    radial-gradient(circle at top left, #d7efe8 0%, transparent 45%),
+    radial-gradient(circle at bottom right, #e8f2f7 0%, transparent 40%),
+    #f7fbfa;
+  color: #12343b;
+}
+
+.page-header,
+.panel,
+.banner {
+  max-width: 72rem;
+  margin: 0 auto 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  letter-spacing: -0.02em;
+}
+
+.page-header p,
+.status,
+.empty {
+  margin: 0;
+  color: #3d5c63;
+}
+
+.status.error,
+.inline-message.error,
+.banner.error {
+  color: #9b2c2c;
+}
+
+.inline-message.success,
+.banner.success {
+  color: #11685f;
+}
+
+.banner {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #d9e7e4;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.35rem 1.5rem;
+}
+
+.panel h2,
+.dialog-header h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.panel-note {
+  margin: 0;
+  color: #3d5c63;
+  font-size: 0.9rem;
+}
+
+.add-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem 1rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  color: #3d5c63;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #c9dbd7;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #12343b;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.span-full {
+  grid-column: 1 / -1;
+}
+
+.roles-fieldset {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #d9e7e4;
+  border-radius: 0.65rem;
+}
+
+.roles-fieldset legend {
+  padding: 0 0.35rem;
+  color: #3d5c63;
+  font-weight: 600;
+}
+
+.role-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+}
+
+.role-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 500;
+  color: #12343b;
+}
+
+.role-option input {
+  width: auto;
+}
+
+.form-actions,
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+button {
+  padding: 0.65rem 1.1rem;
+  border: none;
+  border-radius: 0.55rem;
+  background: #167d71;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.secondary,
+.dialog-close {
+  background: #e8f0ee;
+  color: #12343b;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.add-user-button {
+  flex-shrink: 0;
+}
+
+.inline-message {
+  margin: 0.9rem 0 0;
+  font-size: 0.95rem;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(18, 52, 59, 0.35);
+}
+
+.add-user-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  width: min(calc(100vw - 2rem), 32rem);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  transform: translate(-50%, -50%);
+  padding: 1.25rem 1.35rem 1.4rem;
+  background: #fff;
+  border: 1px solid #d9e7e4;
+  border-radius: 0.85rem;
+  box-shadow: 0 18px 48px rgba(18, 52, 59, 0.18);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.dialog-close {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.accordion {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.accordion-item {
+  border: 1px solid #d9e7e4;
+  border-radius: 0.65rem;
+  overflow: hidden;
+  background: #fbfefd;
+}
+
+.accordion-item h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.accordion-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.accordion-item.open .accordion-trigger {
+  background: #f2f8f6;
+}
+
+.person-summary {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.person-name {
+  font-weight: 700;
+}
+
+.person-meta {
+  color: #3d5c63;
+  font-size: 0.9rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-side {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.status-pill,
+.role-chip {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-pill {
+  background: #e4f3ef;
+  color: #11685f;
+}
+
+.status-pill.inactive {
+  background: #f3e8e8;
+  color: #9b2c2c;
+}
+
+.role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.role-chip {
+  background: #e8f2f7;
+  color: #1f4f63;
+}
+
+.role-chip.muted {
+  background: #eef2f1;
+  color: #6a7f84;
+}
+
+.chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid #3d5c63;
+  border-bottom: 2px solid #3d5c63;
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.accordion-item.open .chevron {
+  transform: rotate(-135deg);
+}
+
+.accordion-panel {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid #e5efec;
+}
+
+.accordion-panel .roles-fieldset {
+  margin-top: 1rem;
+}
+
+.panel-actions {
+  margin-top: 0.9rem;
+}
+
+.provider-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.provider-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #d9e7e4;
+  border-radius: 0.65rem;
+  background: #f8fcfb;
+}
+
+.provider-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.provider-meta {
+  margin: 0;
+  color: #3d5c63;
+  font-size: 0.9rem;
+}
+
+.provider-side {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.provider-dialog {
+  max-width: 42rem;
+}
+
+.nested-form {
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 40rem) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-form {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: auto;
+  }
+
+  .accordion-trigger {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .person-side,
+  .provider-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

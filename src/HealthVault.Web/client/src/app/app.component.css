@@ -1,0 +1,197 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid #d9e7e4;
+  backdrop-filter: blur(12px);
+}
+
+.navbar {
+  width: 100%;
+  min-height: 4.25rem;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #12343b;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #167d71;
+  border-radius: 0.55rem;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-links a {
+  padding: 0.6rem 0.85rem;
+  color: #3d5c63;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: #11685f;
+  background: #e4f3ef;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-chip {
+  padding: 0.6rem 0.85rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #11685f;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.user-menu-panel {
+  position: absolute;
+  top: calc(100% - 0.15rem);
+  right: 0;
+  min-width: 9.5rem;
+  padding-top: 0.35rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.25rem);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    visibility 140ms ease;
+}
+
+.user-menu-panel a,
+.user-menu-panel button {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #d9e7e4;
+  border-radius: 0;
+  background: #fff;
+  color: #12343b;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(18, 52, 59, 0.08);
+}
+
+.user-menu-panel a {
+  border-bottom: 0;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.user-menu-panel button {
+  border-radius: 0 0 0.5rem 0.5rem;
+}
+
+.user-menu:hover .user-chip,
+.user-menu:focus-within .user-chip {
+  background: #e4f3ef;
+}
+
+.user-menu:hover .user-menu-panel,
+.user-menu:focus-within .user-menu-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.user-menu-panel a:hover,
+.user-menu-panel button:hover {
+  background: #e4f3ef;
+  color: #11685f;
+}
+
+.inactivity-banner {
+  position: sticky;
+  top: 4.25rem;
+  z-index: 20;
+  padding: 0.85rem 1rem;
+  background: #fff7e8;
+  border-bottom: 1px solid #f0d9a8;
+  color: #5c4314;
+}
+
+.inactivity-banner-content {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.inactivity-banner h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.inactivity-banner p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.inactivity-banner button {
+  flex-shrink: 0;
+  padding: 0.55rem 0.9rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: #167d71;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inactivity-banner button:hover {
+  background: #11685f;
+}
+
+@media (max-width: 30rem) {
+  .navbar {
+    padding: 0 1rem;
+  }
+
+  .nav-links a {
+    padding-inline: 0.6rem;
+  }
+
+  .inactivity-banner-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

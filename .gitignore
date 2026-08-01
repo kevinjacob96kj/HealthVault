@@ -31,6 +31,9 @@ yarn-error.log*
 **/bin/
 **/obj/
 
+# Angular SPA build output served by ASP.NET
+**/wwwroot/
+
 # Visual Studio
 .vs/
 *.user

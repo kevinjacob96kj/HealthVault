@@ -1,0 +1,103 @@
+<section class="case-page" [class.embedded]="embedded">
+  @if (!embedded) {
+    <header class="page-header">
+      <div>
+        @if (isDoctorView) {
+          <p class="back-link">
+            <a routerLink="/patients">← Back to patients</a>
+          </p>
+        }
+        <h1>{{ loading ? 'Case details' : title }}</h1>
+        <p>
+          @if (isDoctorView) {
+            Patient case assigned to you.
+          } @else {
+            Your HealthVault patient case.
+          }
+        </p>
+      </div>
+    </header>
+  }
+
+  @if (loading) {
+    <p class="status">Loading case details…</p>
+  } @else if (error) {
+    <p class="status error">{{ error }}</p>
+  } @else if (!patient) {
+    <p class="status">No case details available.</p>
+  } @else {
+    <section class="panel" aria-labelledby="case-demographics-heading">
+      <div class="panel-heading">
+        <h2 id="case-demographics-heading">Patient details</h2>
+        <span class="status-pill" [class.inactive]="!patient.isActive">
+          {{ patient.isActive ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+
+      <dl class="patient-details">
+        <div>
+          <dt>ABHA ID</dt>
+          <dd>{{ patient.abhaId }}</dd>
+        </div>
+        <div>
+          <dt>Full name</dt>
+          <dd>{{ patient.firstName }} {{ patient.lastName }}</dd>
+        </div>
+        <div>
+          <dt>Date of birth</dt>
+          <dd>{{ formatDate(patient.dateOfBirth) }}</dd>
+        </div>
+        <div>
+          <dt>Gender</dt>
+          <dd>{{ patient.gender }}</dd>
+        </div>
+        <div>
+          <dt>Email</dt>
+          <dd>{{ patient.email }}</dd>
+        </div>
+        <div>
+          <dt>Mobile number</dt>
+          <dd>{{ patient.mobileNumber }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    @if (isDoctorView) {
+      <section class="panel" aria-labelledby="assignment-heading">
+        <h2 id="assignment-heading">Your assignment</h2>
+        <dl class="patient-details">
+          <div>
+            <dt>Assigned</dt>
+            <dd>{{ formatDate(patient.assignedAt) }}</dd>
+          </div>
+          <div class="span-full">
+            <dt>Notes</dt>
+            <dd>{{ patient.notes || '—' }}</dd>
+          </div>
+        </dl>
+      </section>
+    } @else {
+      <section class="panel" aria-labelledby="care-team-heading">
+        <h2 id="care-team-heading">Care team</h2>
+        @if (careTeam.length === 0) {
+          <p class="panel-note">
+            No doctors assigned yet.
+            <a routerLink="/find-doctor">Find a doctor</a>
+          </p>
+        } @else {
+          <ul class="care-team">
+            @for (doctor of careTeam; track doctor.assignmentId) {
+              <li>
+                <div>
+                  <strong>Dr. {{ doctor.firstName }} {{ doctor.lastName }}</strong>
+                  <span>{{ doctor.specialty || 'General' }} · {{ doctor.providerName }}</span>
+                </div>
+                <span class="assigned-date">Since {{ formatDate(doctor.assignedAt) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</section>

@@ -1,0 +1,172 @@
+<section class="profile-page">
+  <header class="page-header">
+    <h1>Your profile</h1>
+    <p>Update your name and password.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="profile-details-heading">
+    <h2 id="profile-details-heading">Profile details</h2>
+
+    <form class="profile-form" (ngSubmit)="saveProfile()">
+      <label>
+        First name
+        <input [(ngModel)]="firstName" name="firstName" autocomplete="given-name" required />
+      </label>
+      <label>
+        Last name
+        <input [(ngModel)]="lastName" name="lastName" autocomplete="family-name" required />
+      </label>
+      <label class="span-2">
+        Email
+        <input [ngModel]="email" name="email" type="email" disabled />
+      </label>
+
+      <div class="form-actions span-2">
+        <button type="submit" [disabled]="profileSaving">
+          {{ profileSaving ? 'Saving…' : 'Save profile' }}
+        </button>
+      </div>
+    </form>
+
+    @if (profileError) {
+      <p class="message error">{{ profileError }}</p>
+    }
+    @if (profileSuccess) {
+      <p class="message success">{{ profileSuccess }}</p>
+    }
+  </section>
+
+  @if (isPatient) {
+    <section class="panel" aria-labelledby="patient-details-heading">
+      <h2 id="patient-details-heading">Patient details</h2>
+      <p class="panel-note">Your personal patient record from HealthVault.</p>
+
+      @if (patientLoading) {
+        <p class="message">Loading patient details…</p>
+      } @else if (patientError) {
+        <p class="message error">{{ patientError }}</p>
+      } @else if (patientRecord) {
+        <dl class="patient-details">
+          <div>
+            <dt>ABHA ID</dt>
+            <dd>{{ patientRecord.abhaId }}</dd>
+          </div>
+          <div>
+            <dt>First name</dt>
+            <dd>{{ patientRecord.firstName }}</dd>
+          </div>
+          <div>
+            <dt>Last name</dt>
+            <dd>{{ patientRecord.lastName }}</dd>
+          </div>
+          <div>
+            <dt>Date of birth</dt>
+            <dd>{{ formatDate(patientRecord.dateOfBirth) }}</dd>
+          </div>
+          <div>
+            <dt>Gender</dt>
+            <dd>{{ patientRecord.gender }}</dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd>{{ patientRecord.email }}</dd>
+          </div>
+          <div>
+            <dt>Mobile number</dt>
+            <dd>{{ patientRecord.mobileNumber }}</dd>
+          </div>
+        </dl>
+      }
+    </section>
+  }
+
+  <section class="panel password-panel" aria-labelledby="password-heading">
+    <div>
+      <h2 id="password-heading">Password</h2>
+      <p class="panel-note">Update the password used to sign in to your account.</p>
+    </div>
+    <button type="button" (click)="openPasswordModal()">Change Password</button>
+  </section>
+
+  @if (passwordSuccess) {
+    <p class="page-message message success">{{ passwordSuccess }}</p>
+  }
+
+  @if (passwordModalOpen) {
+    <div class="modal-backdrop" (click)="closePasswordModal()">
+      <section
+        class="password-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="password-modal-heading"
+        (click)="$event.stopPropagation()"
+      >
+          <header class="modal-header">
+            <div>
+              <h2 id="password-modal-heading">Change Password</h2>
+              <p>{{ passwordRulesMessage }}</p>
+            </div>
+            <button
+              type="button"
+              class="close-button"
+              aria-label="Close change password dialog"
+              (click)="closePasswordModal()"
+              [disabled]="passwordSaving"
+            >
+              ×
+            </button>
+          </header>
+
+          <form class="profile-form" (ngSubmit)="savePassword()">
+            <label class="span-2">
+              Current password
+              <app-password-field
+                [(ngModel)]="currentPassword"
+                name="currentPassword"
+                autocomplete="current-password"
+                [required]="true"
+              />
+            </label>
+            <label>
+              New password
+              <app-password-field
+                [(ngModel)]="newPassword"
+                name="newPassword"
+                autocomplete="new-password"
+                [minlength]="8"
+                [required]="true"
+              />
+            </label>
+            <label>
+              Confirm new password
+              <app-password-field
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                autocomplete="new-password"
+                [minlength]="8"
+                [required]="true"
+              />
+            </label>
+
+            @if (passwordError) {
+              <p class="message error span-2">{{ passwordError }}</p>
+            }
+
+            <div class="modal-actions span-2">
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="closePasswordModal()"
+                [disabled]="passwordSaving"
+              >
+                Cancel
+              </button>
+              <button type="submit" [disabled]="passwordSaving">
+                {{ passwordSaving ? 'Updating…' : 'Update password' }}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+    }
+</section>

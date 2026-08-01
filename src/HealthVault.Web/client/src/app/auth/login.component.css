@@ -1,0 +1,154 @@
+.login-page {
+  min-height: calc(100vh - 4.25rem);
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(circle at top left, #d7efe8 0%, transparent 45%),
+    radial-gradient(circle at bottom right, #e8f2f7 0%, transparent 40%),
+    #f7fbfa;
+  color: #12343b;
+}
+
+.login-card {
+  width: min(100%, 26rem);
+  display: grid;
+  gap: 1rem;
+  padding: 1.75rem;
+  background: #fff;
+  border: 1px solid #d9e7e4;
+  border-radius: 0.85rem;
+}
+
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  padding: 0.3rem;
+  border-radius: 0.65rem;
+  background: #eef6f4;
+}
+
+.mode-button {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #3d5c63;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mode-button.active {
+  background: #fff;
+  color: #11685f;
+  box-shadow: 0 1px 2px rgba(18, 52, 59, 0.08);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+  color: #3d5c63;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #3d5c63;
+}
+
+input {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #c9ddd8;
+  border-radius: 0.5rem;
+  font: inherit;
+  color: #12343b;
+  background: #fff;
+}
+
+input:focus {
+  outline: 2px solid #167d71;
+  outline-offset: 1px;
+}
+
+button {
+  margin-top: 0.25rem;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: #167d71;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #c5d4d1;
+  color: #6b8085;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.error {
+  color: #9b2c2c;
+  font-weight: 600;
+}
+
+.info {
+  color: #11685f;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 0.9rem;
+}
+
+.debug-otp {
+  display: inline-block;
+  margin-top: 0.25rem;
+  color: #11685f;
+  font-weight: 700;
+}
+
+.link-button {
+  margin: 0;
+  padding: 0;
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: #167d71;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.signup-link {
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.signup-link a {
+  color: #167d71;
+  font-weight: 700;
+}
+
+input:disabled {
+  background: #f2f8f6;
+  color: #3d5c63;
+}

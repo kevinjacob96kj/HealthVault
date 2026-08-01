@@ -1,0 +1,169 @@
+<section class="find-doctor-page">
+  <header class="page-header">
+    <h1>Find a Doctor</h1>
+    <p>Search an institution, choose a doctor, and allow them to see your data.</p>
+  </header>
+
+  @if (success) {
+    <p class="banner success">{{ success }}</p>
+  }
+  @if (error && !confirmDoctor && !confirmUnassign) {
+    <p class="banner error">{{ error }}</p>
+  }
+
+  <div class="layout">
+    <section class="panel">
+      <h2>Search institution</h2>
+      <form class="search-row" (ngSubmit)="searchProviders()">
+        <input
+          [(ngModel)]="searchTerm"
+          name="searchTerm"
+          placeholder="Hospital, clinic, city, or code"
+        />
+        <button type="submit" [disabled]="loadingProviders">
+          {{ loadingProviders ? 'Searching…' : 'Search' }}
+        </button>
+      </form>
+
+      @if (providers.length === 0 && !loadingProviders) {
+        <p class="empty">No institutions found.</p>
+      } @else {
+        <ul class="provider-list">
+          @for (provider of providers; track provider.id) {
+            <li>
+              <button
+                type="button"
+                class="provider-item"
+                [class.selected]="selectedProvider?.id === provider.id"
+                (click)="selectProvider(provider)"
+              >
+                <span class="name">{{ provider.name }}</span>
+                <span class="meta">
+                  {{ provider.providerCode }} · {{ provider.providerType }} ·
+                  {{ provider.city }}, {{ provider.state }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (selectedProvider) {
+        <h3>Doctors at {{ selectedProvider.name }}</h3>
+        @if (loadingDoctors) {
+          <p class="empty">Loading doctors…</p>
+        } @else if (doctors.length === 0) {
+          <p class="empty">No active doctors at this institution.</p>
+        } @else {
+          <ul class="doctor-list">
+            @for (doctor of doctors; track doctor.id) {
+              <li class="doctor-row">
+                <div>
+                  <span class="name">Dr. {{ doctor.firstName }} {{ doctor.lastName }}</span>
+                  <span class="meta">{{ doctor.specialty || 'General' }} · {{ doctor.staffCode }}</span>
+                </div>
+                @if (doctor.isAssigned) {
+                  <span class="badge">Assigned</span>
+                } @else {
+                  <button type="button" (click)="openAssign(doctor)">Add doctor</button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      }
+    </section>
+
+    <aside class="panel">
+      <h2>Your doctors</h2>
+      <p class="panel-note">Active and past assignments are kept for history.</p>
+
+      @if (loadingAssignments) {
+        <p class="empty">Loading…</p>
+      } @else if (assignments.length === 0) {
+        <p class="empty">No doctors assigned yet.</p>
+      } @else {
+        <ul class="assignment-list">
+          @for (item of assignments; track item.assignmentId) {
+            <li class="assignment-row" [class.inactive]="!item.isActive">
+              <div>
+                <span class="name">Dr. {{ item.firstName }} {{ item.lastName }}</span>
+                <span class="meta">
+                  {{ item.providerName }} ·
+                  {{ item.isActive ? 'Active' : 'Ended' }} ·
+                  {{ formatDate(item.assignedAt) }}
+                </span>
+                @if (item.notes) {
+                  <span class="notes">{{ item.notes }}</span>
+                }
+              </div>
+              @if (item.isActive) {
+                <button type="button" class="secondary" (click)="openUnassign(item)">
+                  Remove
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </aside>
+  </div>
+
+  @if (confirmDoctor) {
+    <div class="dialog-backdrop" (click)="declineAssign()"></div>
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h2>Share your data</h2>
+      <p class="consent-copy">
+        Do you agree to share your data with doctor
+        {{ confirmDoctor.firstName }} {{ confirmDoctor.lastName }}?
+      </p>
+      <label class="consent-check">
+        <input
+          type="checkbox"
+          [(ngModel)]="consentChecked"
+          name="consentChecked"
+        />
+        <span>
+          I agree to share my health data with Dr.
+          {{ confirmDoctor.firstName }} {{ confirmDoctor.lastName }}.
+        </span>
+      </label>
+      <label>
+        Notes (optional)
+        <input [(ngModel)]="notes" name="notes" maxlength="500" />
+      </label>
+      @if (error) {
+        <p class="inline error">{{ error }}</p>
+      }
+      <div class="actions">
+        <button type="button" class="secondary" (click)="declineAssign()">Decline</button>
+        <button
+          type="button"
+          (click)="confirmAssign()"
+          [disabled]="!consentChecked || assigningId !== null"
+        >
+          {{ assigningId !== null ? 'Adding…' : 'I accept' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (confirmUnassign) {
+    <div class="dialog-backdrop" (click)="closeDialog()"></div>
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h2>Remove Dr. {{ confirmUnassign.firstName }} {{ confirmUnassign.lastName }}</h2>
+      <p class="panel-note">
+        This doctor will no longer see your data. Assignment history is kept.
+      </p>
+      @if (error) {
+        <p class="inline error">{{ error }}</p>
+      }
+      <div class="actions">
+        <button type="button" class="secondary" (click)="closeDialog()">Cancel</button>
+        <button type="button" (click)="confirmRemove()" [disabled]="unassigningId !== null">
+          {{ unassigningId !== null ? 'Removing…' : 'Confirm remove' }}
+        </button>
+      </div>
+    </div>
+  }
+</section>

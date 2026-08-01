@@ -16,12 +16,16 @@
             Home
           </a>
         }
+
+        @if (auth.isPatient && !auth.mustChangePassword) {
+          <a routerLink="/data-trends" routerLinkActive="active">Data &amp; Trends</a>
+          <a routerLink="/find-doctor" routerLinkActive="active">Find a Doctor</a>
+        }
+
         @if (auth.canAccessAdmin && !auth.mustChangePassword) {
           <a routerLink="/admin" routerLinkActive="active">Admin</a>
         }
-        @if (auth.isPatient && !auth.mustChangePassword) {
-          <a routerLink="/find-doctor" routerLinkActive="active">Find a Doctor</a>
-        }
+
         @if (auth.isDoctor && !auth.mustChangePassword) {
           <a routerLink="/patients" routerLinkActive="active">Patients</a>
         }

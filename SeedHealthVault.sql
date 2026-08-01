@@ -509,3 +509,242 @@ GROUP BY
     staff.[IsActive]
 ORDER BY person.[LastName], person.[FirstName];
 GO
+
+/* ============================================================================
+   LOINC reference codes (common vitals + labs)
+   Full LOINC catalog is licensed from loinc.org; this is a starter subset.
+   ============================================================================ */
+
+IF OBJECT_ID(N'dbo.LoincCodes', N'U') IS NULL
+BEGIN
+    RAISERROR(N'dbo.LoincCodes is missing. Run SetupHealthVault.sql first.', 16, 1);
+    RETURN;
+END;
+GO
+
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
+MERGE [dbo].[LoincCodes] AS target
+USING
+(
+    VALUES
+    -- Vitals
+    (N'8302-2',  N'Body height',                    N'Len',   N'Pt', N'^Patient',           N'Qn', NULL, N'CLIN', N'Body height',              N'Body height',                                      N'ACTIVE', 2, N'cm'),
+    (N'29463-7', N'Body weight',                    N'Mass',  N'Pt', N'^Patient',           N'Qn', NULL, N'CLIN', N'Weight',                   N'Body weight',                                      N'ACTIVE', 2, N'kg'),
+    (N'39156-5', N'Body mass index (BMI)',          N'Ratio', N'Pt', N'^Patient',           N'Qn', N'Calculated', N'CLIN', N'BMI', N'Body mass index (BMI) [Ratio]', N'ACTIVE', 2, N'kg/m2'),
+    (N'8480-6',  N'Systolic blood pressure',        N'Pres',  N'Pt', N'Arterial system',    N'Qn', NULL, N'CLIN', N'Systolic BP',              N'Systolic blood pressure',                          N'ACTIVE', 2, N'mm[Hg]'),
+    (N'8462-4',  N'Diastolic blood pressure',       N'Pres',  N'Pt', N'Arterial system',    N'Qn', NULL, N'CLIN', N'Diastolic BP',             N'Diastolic blood pressure',                         N'ACTIVE', 2, N'mm[Hg]'),
+    (N'8867-4',  N'Heart rate',                     N'NRat',  N'Pt', N'Heart',              N'Qn', NULL, N'CLIN', N'Heart rate',               N'Heart rate',                                       N'ACTIVE', 2, N'/min'),
+    (N'9279-1',  N'Respiratory rate',               N'NRat',  N'Pt', N'Respiratory system', N'Qn', NULL, N'CLIN', N'Resp rate',                N'Respiratory rate',                                 N'ACTIVE', 2, N'/min'),
+    (N'8310-5',  N'Body temperature',               N'Temp',  N'Pt', N'^Patient',           N'Qn', NULL, N'CLIN', N'Body temp',                N'Body temperature',                                 N'ACTIVE', 2, N'Cel'),
+    (N'59408-5', N'Oxygen saturation in Arterial blood by Pulse oximetry', N'MFr', N'Pt', N'BldA', N'Qn', N'Pulse oximetry', N'CLIN', N'SpO2', N'Oxygen saturation in Arterial blood by Pulse oximetry', N'ACTIVE', 2, N'%'),
+    (N'72514-3', N'Pain severity',                  N'Score', N'Pt', N'^Patient',           N'Qn', NULL, N'SURVEY.GNHLTH', N'Pain score 0-10', N'Pain severity [Score] Visual analog score', N'ACTIVE', 2, N'{score}'),
+
+    -- Hematology
+    (N'718-7',   N'Hemoglobin',                     N'MCnc',  N'Pt', N'Bld',                N'Qn', NULL, N'HEM/BC', N'Hgb Bld-mCnc',             N'Hemoglobin [Mass/volume] in Blood',                N'ACTIVE', 1, N'g/dL'),
+    (N'4544-3',  N'Hematocrit',                     N'VFr',   N'Pt', N'Bld',                N'Qn', N'Automated count', N'HEM/BC', N'Hct VFr Bld Auto', N'Hematocrit [Volume Fraction] of Blood by Automated count', N'ACTIVE', 1, N'%'),
+    (N'789-8',   N'Erythrocytes',                   N'NCnc',  N'Pt', N'Bld',                N'Qn', N'Automated count', N'HEM/BC', N'RBC # Bld Auto', N'Erythrocytes [#/volume] in Blood by Automated count', N'ACTIVE', 1, N'10*6/uL'),
+    (N'6690-2',  N'Leukocytes',                     N'NCnc',  N'Pt', N'Bld',                N'Qn', N'Automated count', N'HEM/BC', N'WBC # Bld Auto', N'Leukocytes [#/volume] in Blood by Automated count', N'ACTIVE', 1, N'10*3/uL'),
+    (N'777-3',   N'Platelets',                      N'NCnc',  N'Pt', N'Bld',                N'Qn', N'Automated count', N'HEM/BC', N'Platelet # Bld Auto', N'Platelets [#/volume] in Blood by Automated count', N'ACTIVE', 1, N'10*3/uL'),
+    (N'787-2',   N'Erythrocyte mean corpuscular volume', N'EntVol', N'Pt', N'RBC',        N'Qn', N'Automated count', N'HEM/BC', N'MCV', N'MCV [Entitic volume] by Automated count', N'ACTIVE', 1, N'fL'),
+    (N'785-6',   N'Erythrocyte mean corpuscular hemoglobin', N'EntMass', N'Pt', N'RBC',  N'Qn', N'Automated count', N'HEM/BC', N'MCH', N'MCH [Entitic mass] by Automated count', N'ACTIVE', 1, N'pg'),
+    (N'786-4',   N'Erythrocyte mean corpuscular hemoglobin concentration', N'MCnc', N'Pt', N'RBC', N'Qn', N'Automated count', N'HEM/BC', N'MCHC', N'MCHC [Mass/volume] by Automated count', N'ACTIVE', 1, N'g/dL'),
+
+    -- Chemistry
+    (N'2345-7',  N'Glucose',                        N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Glucose SerPl-mCnc',       N'Glucose [Mass/volume] in Serum or Plasma',         N'ACTIVE', 1, N'mg/dL'),
+    (N'2160-0',  N'Creatinine',                     N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Creatinine SerPl-mCnc',    N'Creatinine [Mass/volume] in Serum or Plasma',      N'ACTIVE', 1, N'mg/dL'),
+    (N'3094-0',  N'Urea nitrogen',                  N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'BUN SerPl-mCnc',           N'Urea nitrogen [Mass/volume] in Serum or Plasma',   N'ACTIVE', 1, N'mg/dL'),
+    (N'1751-7',  N'Albumin',                        N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Albumin SerPl-mCnc',       N'Albumin [Mass/volume] in Serum or Plasma',         N'ACTIVE', 1, N'g/dL'),
+    (N'2885-2',  N'Protein',                        N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Protein SerPl-mCnc',       N'Protein [Mass/volume] in Serum or Plasma',         N'ACTIVE', 1, N'g/dL'),
+    (N'1975-2',  N'Bilirubin',                      N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Bilirub SerPl-mCnc',       N'Bilirubin.total [Mass/volume] in Serum or Plasma', N'ACTIVE', 1, N'mg/dL'),
+    (N'1742-6',  N'Alanine aminotransferase',       N'CCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'ALT SerPl-cCnc',           N'Alanine aminotransferase [Enzymatic activity/volume] in Serum or Plasma', N'ACTIVE', 1, N'U/L'),
+    (N'1920-8',  N'Aspartate aminotransferase',     N'CCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'AST SerPl-cCnc',           N'Aspartate aminotransferase [Enzymatic activity/volume] in Serum or Plasma', N'ACTIVE', 1, N'U/L'),
+    (N'6768-6',  N'Alkaline phosphatase',           N'CCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'ALP SerPl-cCnc',           N'Alkaline phosphatase [Enzymatic activity/volume] in Serum or Plasma', N'ACTIVE', 1, N'U/L'),
+    (N'2324-2',  N'Gamma glutamyl transferase',     N'CCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'GGT SerPl-cCnc',           N'Gamma glutamyl transferase [Enzymatic activity/volume] in Serum or Plasma', N'ACTIVE', 1, N'U/L'),
+
+    -- Electrolytes
+    (N'2951-2',  N'Sodium',                         N'SCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Sodium SerPl-sCnc',        N'Sodium [Moles/volume] in Serum or Plasma',         N'ACTIVE', 1, N'mmol/L'),
+    (N'2823-3',  N'Potassium',                      N'SCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Potassium SerPl-sCnc',     N'Potassium [Moles/volume] in Serum or Plasma',      N'ACTIVE', 1, N'mmol/L'),
+    (N'2075-0',  N'Chloride',                       N'SCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Chloride SerPl-sCnc',      N'Chloride [Moles/volume] in Serum or Plasma',       N'ACTIVE', 1, N'mmol/L'),
+    (N'2028-9',  N'Carbon dioxide',                 N'SCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'CO2 SerPl-sCnc',           N'Carbon dioxide, total [Moles/volume] in Serum or Plasma', N'ACTIVE', 1, N'mmol/L'),
+    (N'17861-6', N'Calcium',                        N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Calcium SerPl-mCnc',       N'Calcium [Mass/volume] in Serum or Plasma',         N'ACTIVE', 1, N'mg/dL'),
+    (N'19123-9', N'Magnesium',                      N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Magnesium SerPl-mCnc',     N'Magnesium [Mass/volume] in Serum or Plasma',       N'ACTIVE', 1, N'mg/dL'),
+
+    -- Lipids / diabetes
+    (N'2093-3',  N'Cholesterol',                    N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Cholest SerPl-mCnc',       N'Cholesterol [Mass/volume] in Serum or Plasma',     N'ACTIVE', 1, N'mg/dL'),
+    (N'2085-9',  N'Cholesterol in HDL',             N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'HDLc SerPl-mCnc',          N'Cholesterol in HDL [Mass/volume] in Serum or Plasma', N'ACTIVE', 1, N'mg/dL'),
+    (N'2089-1',  N'Cholesterol in LDL',             N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'LDLc SerPl-mCnc',          N'Cholesterol in LDL [Mass/volume] in Serum or Plasma', N'ACTIVE', 1, N'mg/dL'),
+    (N'2571-8',  N'Triglyceride',                   N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'Triglyc SerPl-mCnc',       N'Triglyceride [Mass/volume] in Serum or Plasma',    N'ACTIVE', 1, N'mg/dL'),
+    (N'4548-4',  N'Hemoglobin A1c',                 N'MFr',   N'Pt', N'Bld',                N'Qn', NULL, N'HEM/BC', N'HbA1c MFr Bld',          N'Hemoglobin A1c/Hemoglobin.total in Blood',         N'ACTIVE', 1, N'%'),
+
+    -- Urinalysis / other
+    (N'5804-0',  N'Protein',                        N'MCnc',  N'Pt', N'Urine',              N'Qn', NULL, N'UA', N'Protein Ur-mCnc',             N'Protein [Mass/volume] in Urine',                   N'ACTIVE', 1, N'mg/dL'),
+    (N'5792-7',  N'Glucose',                        N'MCnc',  N'Pt', N'Urine',              N'Qn', N'Test strip', N'UA', N'Glucose Ur Strip', N'Glucose [Mass/volume] in Urine by Test strip', N'ACTIVE', 1, N'mg/dL'),
+    (N'20454-5', N'Protein',                        N'MRat',  N'24H', N'Urine',             N'Qn', NULL, N'CHEM', N'Protein 24h Ur-mRate',     N'Protein [Mass/time] in 24 hour Urine',             N'ACTIVE', 1, N'g/(24.h)'),
+    (N'11580-8', N'Thyrotropin',                    N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'TSH SerPl-mCnc',           N'Thyrotropin [Mass/volume] in Serum or Plasma',     N'ACTIVE', 1, N'm[IU]/L'),
+    (N'3016-3',  N'Thyroxine (T4)',                 N'MCnc',  N'Pt', N'Ser/Plas',           N'Qn', NULL, N'CHEM', N'T4 SerPl-mCnc',            N'Thyroxine (T4) [Mass/volume] in Serum or Plasma',  N'ACTIVE', 1, N'ug/dL')
+)
+AS source
+(
+    [LoincNum], [Component], [Property], [TimeAspct], [System], [ScaleTyp], [MethodTyp],
+    [Class], [ShortName], [LongCommonName], [Status], [ClassType], [ExampleUnits]
+)
+ON target.[LoincNum] = source.[LoincNum]
+WHEN MATCHED THEN
+    UPDATE SET
+        target.[Component] = source.[Component],
+        target.[Property] = source.[Property],
+        target.[TimeAspct] = source.[TimeAspct],
+        target.[System] = source.[System],
+        target.[ScaleTyp] = source.[ScaleTyp],
+        target.[MethodTyp] = source.[MethodTyp],
+        target.[Class] = source.[Class],
+        target.[ShortName] = source.[ShortName],
+        target.[LongCommonName] = source.[LongCommonName],
+        target.[Status] = source.[Status],
+        target.[ClassType] = source.[ClassType],
+        target.[ExampleUnits] = source.[ExampleUnits]
+WHEN NOT MATCHED THEN
+    INSERT
+    (
+        [LoincNum], [Component], [Property], [TimeAspct], [System], [ScaleTyp], [MethodTyp],
+        [Class], [ShortName], [LongCommonName], [Status], [ClassType], [ExampleUnits]
+    )
+    VALUES
+    (
+        source.[LoincNum], source.[Component], source.[Property], source.[TimeAspct], source.[System],
+        source.[ScaleTyp], source.[MethodTyp], source.[Class], source.[ShortName],
+        source.[LongCommonName], source.[Status], source.[ClassType], source.[ExampleUnits]
+    );
+GO
+
+SELECT
+    [Id],
+    [LoincNum],
+    [ShortName],
+    [LongCommonName],
+    [Class],
+    [ExampleUnits],
+    [Status]
+FROM [dbo].[LoincCodes]
+ORDER BY [Class], [LoincNum];
+GO
+
+/* ============================================================================
+   Patient observation mock data — Glucose (LOINC 2345-7)
+   ============================================================================ */
+
+IF OBJECT_ID(N'dbo.PatientData', N'U') IS NULL
+BEGIN
+    RAISERROR(N'dbo.PatientData is missing. Run SetupHealthVault.sql first.', 16, 1);
+    RETURN;
+END;
+GO
+
+DECLARE @GlucoseLoincId int =
+(
+    SELECT [Id]
+    FROM [dbo].[LoincCodes]
+    WHERE [LoincNum] = N'2345-7'
+);
+
+IF @GlucoseLoincId IS NULL
+BEGIN
+    RAISERROR(N'Glucose LOINC 2345-7 was not found in dbo.LoincCodes.', 16, 1);
+    RETURN;
+END;
+
+DECLARE @JordanPatientId int =
+(
+    SELECT patient.[Id]
+    FROM [dbo].[Patients] AS patient
+    INNER JOIN [dbo].[People] AS person
+        ON person.[Id] = patient.[PersonId]
+    WHERE person.[Email] = N'healthtest797@gmail.com'
+);
+
+DECLARE @SamPatientId int =
+(
+    SELECT patient.[Id]
+    FROM [dbo].[Patients] AS patient
+    INNER JOIN [dbo].[People] AS person
+        ON person.[Id] = patient.[PersonId]
+    WHERE person.[Email] = N'sam.patel@healthvault.test'
+);
+
+DECLARE @GlucoseRows TABLE
+(
+    [PatientId]  int,
+    [Value]      nvarchar(100),
+    [Units]      nvarchar(50),
+    [ObservedAt] datetime2,
+    [Notes]      nvarchar(500)
+);
+
+IF @JordanPatientId IS NOT NULL
+BEGIN
+    INSERT INTO @GlucoseRows ([PatientId], [Value], [Units], [ObservedAt], [Notes])
+    VALUES
+        (@JordanPatientId, N'98',  N'mg/dL', DATEADD(DAY, -14, SYSUTCDATETIME()), N'Fasting glucose'),
+        (@JordanPatientId, N'112', N'mg/dL', DATEADD(DAY, -7, SYSUTCDATETIME()),  N'Random glucose'),
+        (@JordanPatientId, N'105', N'mg/dL', DATEADD(DAY, -1, SYSUTCDATETIME()),  N'Fasting glucose');
+END;
+
+IF @SamPatientId IS NOT NULL
+BEGIN
+    INSERT INTO @GlucoseRows ([PatientId], [Value], [Units], [ObservedAt], [Notes])
+    VALUES
+        (@SamPatientId, N'126', N'mg/dL', DATEADD(DAY, -10, SYSUTCDATETIME()), N'Fasting glucose'),
+        (@SamPatientId, N'141', N'mg/dL', DATEADD(DAY, -3, SYSUTCDATETIME()),  N'Postprandial glucose');
+END;
+
+INSERT INTO [dbo].[PatientData]
+(
+    [PatientId],
+    [LoincCodeId],
+    [Value],
+    [Units],
+    [ObservedAt],
+    [Notes]
+)
+SELECT
+    source.[PatientId],
+    @GlucoseLoincId,
+    source.[Value],
+    source.[Units],
+    source.[ObservedAt],
+    source.[Notes]
+FROM @GlucoseRows AS source
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[PatientData] AS existing
+    WHERE existing.[PatientId] = source.[PatientId]
+      AND existing.[LoincCodeId] = @GlucoseLoincId
+      AND existing.[ObservedAt] = source.[ObservedAt]
+      AND existing.[Value] = source.[Value]
+);
+GO
+
+SELECT
+    data.[Id],
+    patient.[AbhaId],
+    person.[FirstName],
+    person.[LastName],
+    loinc.[LoincNum],
+    loinc.[ShortName],
+    data.[Value],
+    data.[Units],
+    data.[ObservedAt],
+    data.[Notes]
+FROM [dbo].[PatientData] AS data
+INNER JOIN [dbo].[Patients] AS patient
+    ON patient.[Id] = data.[PatientId]
+INNER JOIN [dbo].[People] AS person
+    ON person.[Id] = patient.[PersonId]
+INNER JOIN [dbo].[LoincCodes] AS loinc
+    ON loinc.[Id] = data.[LoincCodeId]
+ORDER BY person.[LastName], data.[ObservedAt] DESC;
+GO

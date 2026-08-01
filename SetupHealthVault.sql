@@ -14,6 +14,8 @@
         dbo.Provider                    (formerly Healthcare.Provider / dbo.HealthcareProvider)
         dbo.Staff                       (formerly Healthcare.Staff / dbo.HealthcareStaff)
         dbo.PatientDoctorAssignments
+        dbo.LoincCodes                  (LOINC reference codes)
+        dbo.PatientData                 (patient observations keyed by LOINC)
 
     The script is fully idempotent - it can be run repeatedly against a
     database at any prior version and will converge on the target schema.
@@ -1040,6 +1042,285 @@ BEGIN
     PRINT N'Dropping empty Healthcare_rename_tmp schema...';
     EXEC (N'DROP SCHEMA [Healthcare_rename_tmp]');
 END;
+GO
+
+/* ============================================================================
+   dbo.LoincCodes — LOINC reference codes for observations / labs / vitals
+   ============================================================================ */
+
+IF OBJECT_ID(N'dbo.LoincCodes', N'U') IS NULL
+BEGIN
+    PRINT N'Creating dbo.LoincCodes...';
+
+    CREATE TABLE [dbo].[LoincCodes]
+    (
+        [Id]               int IDENTITY(1,1) NOT NULL,
+        [LoincNum]         nvarchar(20)  NOT NULL,
+        [Component]        nvarchar(255) NOT NULL,
+        [Property]         nvarchar(50)  NULL,
+        [TimeAspct]        nvarchar(50)  NULL,
+        [System]           nvarchar(100) NULL,
+        [ScaleTyp]         nvarchar(30)  NULL,
+        [MethodTyp]        nvarchar(100) NULL,
+        [Class]            nvarchar(50)  NULL,
+        [ShortName]        nvarchar(100) NULL,
+        [LongCommonName]   nvarchar(255) NOT NULL,
+        [Status]           nvarchar(20)  NOT NULL
+            CONSTRAINT [DF_LoincCodes_Status] DEFAULT N'ACTIVE',
+        [ClassType]        tinyint       NULL,
+        [ExampleUnits]     nvarchar(50)  NULL,
+        [CreatedAt]        datetime2     NOT NULL
+            CONSTRAINT [DF_LoincCodes_CreatedAt] DEFAULT SYSUTCDATETIME(),
+
+        CONSTRAINT [PK_LoincCodes] PRIMARY KEY ([Id]),
+        CONSTRAINT [UQ_LoincCodes_LoincNum] UNIQUE ([LoincNum]),
+        CONSTRAINT [CK_LoincCodes_Status]
+            CHECK ([Status] IN (N'ACTIVE', N'DEPRECATED', N'DISCOURAGED', N'TRIAL'))
+    );
+
+    CREATE INDEX [IX_LoincCodes_ShortName]
+        ON [dbo].[LoincCodes] ([ShortName]);
+
+    CREATE INDEX [IX_LoincCodes_Class]
+        ON [dbo].[LoincCodes] ([Class]);
+
+    CREATE INDEX [IX_LoincCodes_LongCommonName]
+        ON [dbo].[LoincCodes] ([LongCommonName]);
+END;
+GO
+
+-- Upgrade existing LoincCodes that used LoincNum as the primary key.
+IF OBJECT_ID(N'dbo.LoincCodes', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.LoincCodes', N'Id') IS NULL
+BEGIN
+    PRINT N'Adding dbo.LoincCodes.Id identity column...';
+
+    ALTER TABLE [dbo].[LoincCodes]
+        ADD [Id] int IDENTITY(1,1) NOT NULL;
+
+    DECLARE @PkName sysname =
+    (
+        SELECT [name]
+        FROM sys.key_constraints
+        WHERE [parent_object_id] = OBJECT_ID(N'dbo.LoincCodes')
+          AND [type] = N'PK'
+    );
+
+    IF @PkName IS NOT NULL
+        EXEC(N'ALTER TABLE [dbo].[LoincCodes] DROP CONSTRAINT [' + @PkName + N']');
+
+    ALTER TABLE [dbo].[LoincCodes]
+        ADD CONSTRAINT [PK_LoincCodes] PRIMARY KEY ([Id]);
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM sys.key_constraints
+        WHERE [parent_object_id] = OBJECT_ID(N'dbo.LoincCodes')
+          AND [name] = N'UQ_LoincCodes_LoincNum'
+    )
+    BEGIN
+        ALTER TABLE [dbo].[LoincCodes]
+            ADD CONSTRAINT [UQ_LoincCodes_LoincNum] UNIQUE ([LoincNum]);
+    END;
+END;
+GO
+
+EXEC #AddColumnIfMissing N'dbo.LoincCodes', N'ExampleUnits', N'nvarchar(50) NULL';
+EXEC #AddColumnIfMissing N'dbo.LoincCodes', N'ClassType', N'tinyint NULL';
+EXEC #AddColumnIfMissing N'dbo.LoincCodes', N'CreatedAt',
+    N'datetime2 NOT NULL CONSTRAINT [DF_LoincCodes_CreatedAt] DEFAULT SYSUTCDATETIME()';
+GO
+
+EXEC #CreateIndexIfMissing N'IX_LoincCodes_ShortName', N'dbo.LoincCodes', N'[ShortName]';
+EXEC #CreateIndexIfMissing N'IX_LoincCodes_Class', N'dbo.LoincCodes', N'[Class]';
+EXEC #CreateIndexIfMissing N'IX_LoincCodes_LongCommonName', N'dbo.LoincCodes', N'[LongCommonName]';
+GO
+
+IF OBJECT_ID(N'dbo.LoincCodes', N'U') IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM sys.key_constraints WHERE [name] = N'UQ_LoincCodes_LoincNum' AND [parent_object_id] = OBJECT_ID(N'dbo.LoincCodes'))
+   AND COL_LENGTH(N'dbo.LoincCodes', N'LoincNum') IS NOT NULL
+BEGIN
+    ALTER TABLE [dbo].[LoincCodes]
+        ADD CONSTRAINT [UQ_LoincCodes_LoincNum] UNIQUE ([LoincNum]);
+END;
+GO
+
+IF OBJECT_ID(N'dbo.LoincCodes', N'U') IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE [name] = N'CK_LoincCodes_Status')
+BEGIN
+    ALTER TABLE [dbo].[LoincCodes]
+        ADD CONSTRAINT [CK_LoincCodes_Status]
+            CHECK ([Status] IN (N'ACTIVE', N'DEPRECATED', N'DISCOURAGED', N'TRIAL'));
+END;
+GO
+
+-- Ensure Id is the first column on dbo.LoincCodes.
+IF OBJECT_ID(N'dbo.LoincCodes', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.LoincCodes', N'Id') IS NOT NULL
+   AND ISNULL(
+   (
+       SELECT cols.[name]
+       FROM
+       (
+           SELECT [name], ROW_NUMBER() OVER (ORDER BY [column_id]) AS rn
+           FROM sys.columns
+           WHERE [object_id] = OBJECT_ID(N'dbo.LoincCodes')
+       ) cols
+       WHERE cols.rn = 1
+   ), N'') <> N'Id'
+BEGIN
+    PRINT N'Rebuilding dbo.LoincCodes with Id as column 1...';
+
+    IF OBJECT_ID(N'dbo.LoincCodes_Rebuild', N'U') IS NOT NULL
+        DROP TABLE [dbo].[LoincCodes_Rebuild];
+
+    CREATE TABLE [dbo].[LoincCodes_Rebuild]
+    (
+        [Id]               int IDENTITY(1,1) NOT NULL,
+        [LoincNum]         nvarchar(20)  NOT NULL,
+        [Component]        nvarchar(255) NOT NULL,
+        [Property]         nvarchar(50)  NULL,
+        [TimeAspct]        nvarchar(50)  NULL,
+        [System]           nvarchar(100) NULL,
+        [ScaleTyp]         nvarchar(30)  NULL,
+        [MethodTyp]        nvarchar(100) NULL,
+        [Class]            nvarchar(50)  NULL,
+        [ShortName]        nvarchar(100) NULL,
+        [LongCommonName]   nvarchar(255) NOT NULL,
+        [Status]           nvarchar(20)  NOT NULL
+            CONSTRAINT [DF_LoincCodes_Rebuild_Status] DEFAULT N'ACTIVE',
+        [ClassType]        tinyint       NULL,
+        [ExampleUnits]     nvarchar(50)  NULL,
+        [CreatedAt]        datetime2     NOT NULL
+            CONSTRAINT [DF_LoincCodes_Rebuild_CreatedAt] DEFAULT SYSUTCDATETIME(),
+
+        CONSTRAINT [PK_LoincCodes_Rebuild] PRIMARY KEY ([Id]),
+        CONSTRAINT [UQ_LoincCodes_Rebuild_LoincNum] UNIQUE ([LoincNum]),
+        CONSTRAINT [CK_LoincCodes_Rebuild_Status]
+            CHECK ([Status] IN (N'ACTIVE', N'DEPRECATED', N'DISCOURAGED', N'TRIAL'))
+    );
+
+    SET IDENTITY_INSERT [dbo].[LoincCodes_Rebuild] ON;
+
+    INSERT INTO [dbo].[LoincCodes_Rebuild]
+    (
+        [Id], [LoincNum], [Component], [Property], [TimeAspct], [System], [ScaleTyp], [MethodTyp],
+        [Class], [ShortName], [LongCommonName], [Status], [ClassType], [ExampleUnits], [CreatedAt]
+    )
+    SELECT
+        [Id], [LoincNum], [Component], [Property], [TimeAspct], [System], [ScaleTyp], [MethodTyp],
+        [Class], [ShortName], [LongCommonName], [Status], [ClassType], [ExampleUnits], [CreatedAt]
+    FROM [dbo].[LoincCodes];
+
+    SET IDENTITY_INSERT [dbo].[LoincCodes_Rebuild] OFF;
+
+    DECLARE @DropLoincFk nvarchar(max);
+    WHILE EXISTS
+    (
+        SELECT 1
+        FROM sys.foreign_keys
+        WHERE [referenced_object_id] = OBJECT_ID(N'dbo.LoincCodes')
+           OR [parent_object_id] = OBJECT_ID(N'dbo.LoincCodes')
+    )
+    BEGIN
+        SELECT TOP (1) @DropLoincFk =
+            N'ALTER TABLE [' + OBJECT_SCHEMA_NAME(fk.[parent_object_id]) + N'].[' +
+            OBJECT_NAME(fk.[parent_object_id]) + N'] DROP CONSTRAINT [' + fk.[name] + N']'
+        FROM sys.foreign_keys AS fk
+        WHERE fk.[referenced_object_id] = OBJECT_ID(N'dbo.LoincCodes')
+           OR fk.[parent_object_id] = OBJECT_ID(N'dbo.LoincCodes');
+        EXEC sys.sp_executesql @DropLoincFk;
+    END;
+
+    DROP TABLE [dbo].[LoincCodes];
+    EXEC sp_rename N'dbo.LoincCodes_Rebuild', N'LoincCodes';
+
+    IF EXISTS (SELECT 1 FROM sys.key_constraints WHERE [parent_object_id] = OBJECT_ID(N'dbo.LoincCodes') AND [name] = N'PK_LoincCodes_Rebuild')
+        EXEC sp_rename N'dbo.PK_LoincCodes_Rebuild', N'PK_LoincCodes', N'OBJECT';
+
+    IF EXISTS (SELECT 1 FROM sys.key_constraints WHERE [parent_object_id] = OBJECT_ID(N'dbo.LoincCodes') AND [name] = N'UQ_LoincCodes_Rebuild_LoincNum')
+        EXEC sp_rename N'dbo.UQ_LoincCodes_Rebuild_LoincNum', N'UQ_LoincCodes_LoincNum', N'OBJECT';
+
+    IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE [parent_object_id] = OBJECT_ID(N'dbo.LoincCodes') AND [name] = N'CK_LoincCodes_Rebuild_Status')
+        EXEC sp_rename N'dbo.CK_LoincCodes_Rebuild_Status', N'CK_LoincCodes_Status', N'OBJECT';
+
+    IF EXISTS (SELECT 1 FROM sys.default_constraints WHERE [parent_object_id] = OBJECT_ID(N'dbo.LoincCodes') AND [name] = N'DF_LoincCodes_Rebuild_Status')
+        EXEC sp_rename N'dbo.DF_LoincCodes_Rebuild_Status', N'DF_LoincCodes_Status', N'OBJECT';
+
+    IF EXISTS (SELECT 1 FROM sys.default_constraints WHERE [parent_object_id] = OBJECT_ID(N'dbo.LoincCodes') AND [name] = N'DF_LoincCodes_Rebuild_CreatedAt')
+        EXEC sp_rename N'dbo.DF_LoincCodes_Rebuild_CreatedAt', N'DF_LoincCodes_CreatedAt', N'OBJECT';
+
+    EXEC #CreateIndexIfMissing N'IX_LoincCodes_ShortName', N'dbo.LoincCodes', N'[ShortName]';
+    EXEC #CreateIndexIfMissing N'IX_LoincCodes_Class', N'dbo.LoincCodes', N'[Class]';
+    EXEC #CreateIndexIfMissing N'IX_LoincCodes_LongCommonName', N'dbo.LoincCodes', N'[LongCommonName]';
+
+    IF OBJECT_ID(N'dbo.PatientData', N'U') IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE [name] = N'FK_PatientData_LoincCodes_LoincCodeId')
+    BEGIN
+        ALTER TABLE [dbo].[PatientData]
+            ADD CONSTRAINT [FK_PatientData_LoincCodes_LoincCodeId]
+                FOREIGN KEY ([LoincCodeId])
+                REFERENCES [dbo].[LoincCodes] ([Id]);
+    END;
+END;
+GO
+
+/* ============================================================================
+   dbo.PatientData — patient observations / results linked to LOINC codes
+   ============================================================================ */
+
+IF OBJECT_ID(N'dbo.PatientData', N'U') IS NULL
+   AND OBJECT_ID(N'dbo.Patients', N'U') IS NOT NULL
+   AND OBJECT_ID(N'dbo.LoincCodes', N'U') IS NOT NULL
+BEGIN
+    PRINT N'Creating dbo.PatientData...';
+
+    CREATE TABLE [dbo].[PatientData]
+    (
+        [Id]          int IDENTITY(1,1) NOT NULL,
+        [PatientId]   int NOT NULL,
+        [LoincCodeId] int NOT NULL,
+        [Value]       nvarchar(100) NOT NULL,
+        [Units]       nvarchar(50) NULL,
+        [ObservedAt]  datetime2 NOT NULL
+            CONSTRAINT [DF_PatientData_ObservedAt] DEFAULT SYSUTCDATETIME(),
+        [Notes]       nvarchar(500) NULL,
+        [CreatedAt]   datetime2 NOT NULL
+            CONSTRAINT [DF_PatientData_CreatedAt] DEFAULT SYSUTCDATETIME(),
+
+        CONSTRAINT [PK_PatientData] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_PatientData_Patients_PatientId]
+            FOREIGN KEY ([PatientId])
+            REFERENCES [dbo].[Patients] ([Id])
+            ON DELETE CASCADE,
+        CONSTRAINT [FK_PatientData_LoincCodes_LoincCodeId]
+            FOREIGN KEY ([LoincCodeId])
+            REFERENCES [dbo].[LoincCodes] ([Id])
+            ON DELETE NO ACTION
+    );
+
+    CREATE INDEX [IX_PatientData_PatientId]
+        ON [dbo].[PatientData] ([PatientId]);
+
+    CREATE INDEX [IX_PatientData_LoincCodeId]
+        ON [dbo].[PatientData] ([LoincCodeId]);
+
+    CREATE INDEX [IX_PatientData_PatientId_ObservedAt]
+        ON [dbo].[PatientData] ([PatientId], [ObservedAt]);
+END;
+GO
+
+EXEC #AddForeignKeyIfMissing N'FK_PatientData_Patients_PatientId',
+    N'dbo.PatientData', N'PatientId', N'dbo.Patients', N'Id', @OnDeleteCascade = 1;
+EXEC #AddForeignKeyIfMissing N'FK_PatientData_LoincCodes_LoincCodeId',
+    N'dbo.PatientData', N'LoincCodeId', N'dbo.LoincCodes', N'Id';
+GO
+
+EXEC #CreateIndexIfMissing N'IX_PatientData_PatientId', N'dbo.PatientData', N'[PatientId]';
+EXEC #CreateIndexIfMissing N'IX_PatientData_LoincCodeId', N'dbo.PatientData', N'[LoincCodeId]';
+EXEC #CreateIndexIfMissing N'IX_PatientData_PatientId_ObservedAt',
+    N'dbo.PatientData', N'[PatientId], [ObservedAt]';
 GO
 
 PRINT N'HealthVault schema setup complete.';

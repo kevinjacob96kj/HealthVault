@@ -13,4 +13,5 @@ public class Patient
     public Person Person { get; set; } = null!;
     public ICollection<PatientDoctorAssignment> DoctorAssignments { get; set; } =
         new List<PatientDoctorAssignment>();
+    public ICollection<PatientData> Observations { get; set; } = new List<PatientData>();
 }

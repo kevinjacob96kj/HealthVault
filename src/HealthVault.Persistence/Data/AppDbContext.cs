@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
     public DbSet<PatientDoctorAssignment> PatientDoctorAssignments => Set<PatientDoctorAssignment>();
     public DbSet<HealthcareProvider> HealthcareProviders => Set<HealthcareProvider>();
     public DbSet<HealthcareStaff> HealthcareStaff => Set<HealthcareStaff>();
+    public DbSet<LoincCode> LoincCodes => Set<LoincCode>();
+    public DbSet<PatientData> PatientData => Set<PatientData>();
     public DbSet<ApiRequest> Requests => Set<ApiRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -126,6 +128,53 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.Person)
                 .WithOne(person => person.StaffAssignment)
                 .HasForeignKey<HealthcareStaff>(e => e.PersonId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<LoincCode>(entity =>
+        {
+            entity.ToTable("LoincCodes", "dbo");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.LoincNum).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Component).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Property).HasMaxLength(50);
+            entity.Property(e => e.TimeAspct).HasMaxLength(50);
+            entity.Property(e => e.System).HasMaxLength(100);
+            entity.Property(e => e.ScaleTyp).HasMaxLength(30);
+            entity.Property(e => e.MethodTyp).HasMaxLength(100);
+            entity.Property(e => e.Class).HasMaxLength(50);
+            entity.Property(e => e.ShortName).HasMaxLength(100);
+            entity.Property(e => e.LongCommonName).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.ExampleUnits).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+            entity.HasIndex(e => e.LoincNum).IsUnique();
+            entity.HasIndex(e => e.ShortName);
+            entity.HasIndex(e => e.Class);
+            entity.HasIndex(e => e.LongCommonName);
+        });
+
+        modelBuilder.Entity<PatientData>(entity =>
+        {
+            entity.ToTable("PatientData", "dbo");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Value).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Units).HasMaxLength(50);
+            entity.Property(e => e.ObservedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .IsRequired();
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+            entity.HasIndex(e => e.PatientId);
+            entity.HasIndex(e => e.LoincCodeId);
+            entity.HasIndex(e => new { e.PatientId, e.ObservedAt });
+            entity.HasOne(e => e.Patient)
+                .WithMany(patient => patient.Observations)
+                .HasForeignKey(e => e.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.LoincCode)
+                .WithMany(loinc => loinc.PatientDataRows)
+                .HasForeignKey(e => e.LoincCodeId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

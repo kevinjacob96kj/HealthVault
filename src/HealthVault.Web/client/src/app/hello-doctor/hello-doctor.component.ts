@@ -1,11 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { CaseDetailsComponent } from '../case-details/case-details.component';
 
 @Component({
   selector: 'app-hello-doctor',
   standalone: true,
-  imports: [CaseDetailsComponent],
   templateUrl: './hello-doctor.component.html',
   styleUrl: './hello-doctor.component.css'
 })

@@ -1,14 +1,4 @@
-@if (auth.isPatient) {
-  <main class="home-patient">
-    <header class="home-intro">
-      <h1>{{ message }}</h1>
-      <p>Welcome to HealthVault.</p>
-    </header>
-    <app-case-details [embedded]="true" />
-  </main>
-} @else {
-  <main class="hello-doctor">
-    <h1>{{ message }}</h1>
-    <p>Welcome to HealthVault.</p>
-  </main>
-}
+<main class="hello-doctor">
+  <h1>{{ message }}</h1>
+  <p>Welcome to HealthVault.</p>
+</main>

@@ -38,6 +38,21 @@ public class PatientsController : BaseApiController
         return patient;
     }
 
+    [Route("api/patients/me/data")]
+    [HttpGet]
+    [Authorize(Policy = HealthVaultPolicies.MustBeAPatient)]
+    public async Task<ActionResult<IReadOnlyList<PatientObservationModel>>> GetMyData(
+        CancellationToken cancellationToken)
+    {
+        var email = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await Mediator.Send(new GetMyPatientDataQuery(email), cancellationToken));
+    }
+
     [Route("api/patients/me/doctors")]
     [HttpGet]
     [Authorize(Policy = HealthVaultPolicies.MustBeAPatient)]
